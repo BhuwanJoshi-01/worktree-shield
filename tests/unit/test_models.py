@@ -10,6 +10,8 @@ from worktree_shield.models import (
     Evidence,
     FailureKind,
     Finding,
+    Policy,
+    PolicyLevel,
     ProbeFailure,
     Severity,
     Snapshot,
@@ -129,3 +131,17 @@ def test_snapshot_carries_schema_and_tool_version() -> None:
 
 def test_utc_timestamp_is_iso_8601_utc() -> None:
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", utc_timestamp())
+
+
+def test_policy_levels_are_the_documented_strings() -> None:
+    assert [level.value for level in PolicyLevel] == ["allow", "warn", "deny"]
+
+
+def test_default_policy_is_deliberate() -> None:
+    policy = Policy()
+    assert policy.shared_host_ports is PolicyLevel.DENY  # two dev servers on one port fail
+    assert policy.shared_database is PolicyLevel.WARN  # shared dev databases are often fine
+    assert policy.include_env_files is False  # .env is opt-in
+    assert policy.include_runtime is True  # read-only process inspection
+    assert policy.max_file_bytes == 262_144
+    assert (policy.allow_ports, policy.allow_paths, policy.source) == ((), (), None)

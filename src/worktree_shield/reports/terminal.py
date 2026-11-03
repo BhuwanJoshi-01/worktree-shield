@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from worktree_shield.models import Repository, Snapshot, Worktree
+from worktree_shield.models import Policy, Repository, Snapshot, Worktree
 
 _REDACTION_NAMES = {
     "home_path": ("home path", "home paths"),
@@ -122,3 +122,70 @@ def render_worktrees(snapshot: Snapshot, console: Console) -> None:
     if line:
         console.print()
         console.print(Text(line, style="dim"))
+
+
+def _policy_rows(policy: Policy) -> list[tuple[str, str, str]]:
+    """(setting, value, default value) in the order of the policy file."""
+    default = Policy()
+
+    def flag(value: bool) -> str:
+        return "true" if value else "false"
+
+    def listed(values: tuple[object, ...]) -> str:
+        return ", ".join(display_path(str(v)) for v in values) if values else "none"
+
+    return [
+        ("scan.include_runtime", flag(policy.include_runtime), flag(default.include_runtime)),
+        ("scan.include_env_files", flag(policy.include_env_files), flag(default.include_env_files)),
+        ("scan.max_file_bytes", str(policy.max_file_bytes), str(default.max_file_bytes)),
+        ("policy.shared_host_ports", policy.shared_host_ports, default.shared_host_ports),
+        ("policy.shared_database", policy.shared_database, default.shared_database),
+        (
+            "policy.shared_compose_projects",
+            policy.shared_compose_projects,
+            default.shared_compose_projects,
+        ),
+        (
+            "policy.fixed_container_names",
+            policy.fixed_container_names,
+            default.fixed_container_names,
+        ),
+        (
+            "policy.shared_absolute_paths",
+            policy.shared_absolute_paths,
+            default.shared_absolute_paths,
+        ),
+        ("allow.ports", listed(policy.allow_ports), listed(default.allow_ports)),
+        ("allow.paths", listed(policy.allow_paths), listed(default.allow_paths)),
+    ]
+
+
+def render_policy(policy: Policy, worktree: str | None, console: Console) -> None:
+    """The effective policy of a worktree and where each value comes from."""
+    if policy.source is not None:
+        console.print(Text(f"Policy from {display_path(policy.source)}", style="bold"))
+    elif worktree is not None:
+        console.print(Text("Built-in defaults", style="bold"))
+        console.print(Text(f"No .worktree-shield.toml in {display_path(worktree)}", style="dim"))
+    else:
+        console.print(
+            Text("Built-in defaults (a bare repository has no policy file)", style="bold")
+        )
+    console.print()
+    table = Table(box=None, show_edge=False, pad_edge=False, header_style="bold")
+    table.add_column("Setting", no_wrap=True)
+    table.add_column("Value", overflow="fold")
+    table.add_column("")
+    for name, value, default in _policy_rows(policy):
+        note = "" if value == default or policy.source is None else f"default: {default}"
+        table.add_row(Text(name), Text(str(value)), Text(note, style="dim"))
+    console.print(table)
+    console.print()
+    console.print(
+        Text(
+            "deny fails --strict, warn is reported, allow is information only. allow.ports "
+            "are endpoints the worktrees may share as clients; two listeners on one port are "
+            "never allowed by it.",
+            style="dim",
+        )
+    )

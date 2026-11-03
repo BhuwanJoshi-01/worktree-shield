@@ -14,11 +14,12 @@ import typer
 from rich.console import Console
 
 from worktree_shield import __version__
+from worktree_shield.config import PolicyError, policy_of
 from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
 from worktree_shield.orchestrator import inspect_worktrees
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
-from worktree_shield.reports.terminal import render_worktrees
+from worktree_shield.reports.terminal import render_policy, render_worktrees
 from worktree_shield.runner import SubprocessRunner
 
 HELP = (
@@ -79,6 +80,41 @@ def worktrees(
     render_worktrees(redact_snapshot(snapshot), Console(highlight=False))
     if snapshot.repository is None:
         raise typer.Exit(ExitCode.ERROR)
+
+
+@app.command()
+def policy(
+    repo: Annotated[
+        Path,
+        typer.Option(
+            "--repo", metavar="PATH", help="A directory inside the repository (default: here)."
+        ),
+    ] = Path(),
+) -> None:
+    """Show the policy that applies: .worktree-shield.toml in this worktree, or the defaults.
+
+    The file is read as data, never run. A file that cannot be used is reported with the
+    key at fault and exits with code 2; outside a Git repository the exit code is 3.
+    """
+    redactor = Redactor(RedactionContext.current())
+    try:
+        snapshot = inspect_worktrees(SubprocessRunner(), repo)
+        if snapshot.repository is None:
+            details = "; ".join(f.detail for f in snapshot.probe_failures)
+            raise PolicyError(f"the worktrees could not be listed: {details}")
+        effective = policy_of(snapshot.repository)
+    except NotARepositoryError:
+        typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)
+        raise typer.Exit(ExitCode.CONTEXT_UNAVAILABLE) from None
+    except PolicyError as error:
+        typer.echo(f"worktree-shield: {redactor.text(str(error))}", err=True)
+        raise typer.Exit(ExitCode.ERROR) from None
+    current = snapshot.repository.current
+    render_policy(
+        redactor.redact(effective),
+        redactor.text(current) if current is not None else None,
+        Console(highlight=False),
+    )
 
 
 def main() -> None:

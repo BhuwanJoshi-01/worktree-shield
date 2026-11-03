@@ -179,6 +179,41 @@ class Repository:
     worktrees: tuple[Worktree, ...]
 
 
+class PolicyLevel(StrEnum):
+    """What a kind of shared resource means for ``--strict``.
+
+    ``allow`` reports it as information, ``warn`` as a warning, ``deny`` as a failure,
+    which makes ``--strict`` exit with 1.
+    """
+
+    ALLOW = "allow"
+    WARN = "warn"
+    DENY = "deny"
+
+
+@dataclass(frozen=True, slots=True)
+class Policy:
+    """The effective policy: built-in defaults, then the repository's file, then flags.
+
+    ``allow_ports`` are shared *infrastructure endpoints* that every worktree may
+    connect to (one Postgres on 5432 for all of them); they never excuse two processes
+    trying to *listen* on the same port. ``source`` is the policy file that was read,
+    ``None`` for the defaults alone.
+    """
+
+    include_runtime: bool = True
+    include_env_files: bool = False
+    max_file_bytes: int = 262_144
+    shared_host_ports: PolicyLevel = PolicyLevel.DENY
+    shared_database: PolicyLevel = PolicyLevel.WARN
+    shared_compose_projects: PolicyLevel = PolicyLevel.WARN
+    fixed_container_names: PolicyLevel = PolicyLevel.WARN
+    shared_absolute_paths: PolicyLevel = PolicyLevel.WARN
+    allow_ports: tuple[int, ...] = ()
+    allow_paths: tuple[str, ...] = ()
+    source: str | None = None
+
+
 @dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""

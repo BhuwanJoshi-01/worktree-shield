@@ -23,12 +23,14 @@ uv run pytest -q --cov                     # with coverage
 src/worktree_shield/
   cli.py          Typer app + main(): exit codes, redacted internal errors (WTS_DEBUG=1 for tracebacks)
   models.py       Status/Severity/Confidence, Certainty (confirmed/probable/possible/unknown), SourceRef,
-                  Evidence, Finding (codes WTS-<AREA>-<NNN>), ProbeFailure, Snapshot
+                  Evidence, Finding (codes WTS-<AREA>-<NNN>), ProbeFailure, Policy/PolicyLevel, Snapshot
   runner.py       CommandRunner protocol, SubprocessRunner (no shell, timeout kills the process group,
                   capped output), probe_failure()
   privacy.py      strip_control(), RedactionContext, Redactor, redact_snapshot()
   exit_codes.py   ExitCode: 0 ok, 1 strict, 2 error, 3 not in a Git repository, 130 interrupted
   orchestrator.py inspect_worktrees(): runs discovery, builds the Snapshot (facts only)
+  config.py       .worktree-shield.toml: parse_policy() (tomllib, every key checked, unknown = error),
+                  load_policy() (regular file inside the worktree, 64 KiB cap), apply_overrides()
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
   reports/        terminal.py (plain Text; display_path() escapes control characters)
@@ -38,8 +40,10 @@ tests/
   gitrepos.py     real repositories in tmp dirs (make_repo, add_worktree; global git config off),
                   tree_digest() to prove a scan wrote nothing, same_path() for Windows paths
   fixtures/git/   real porcelain captures (binary in .gitattributes: NULs and a newline in a path)
+  fixtures/policy/ hand-written policy files
   unit/           unit tests; Git fixtures are real temporary repositories
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
+docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
 .github/          CI, issue forms, PR template
 ```
 
