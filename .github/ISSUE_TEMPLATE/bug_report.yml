@@ -1,0 +1,59 @@
+name: Bug report
+description: A crash, a missed collision, or a false alarm
+labels: ["type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Never paste real `.env` files, database URLs with passwords, or tokens.** Reports
+        from `worktree-shield report` are redacted by default; check them anyway before posting.
+  - type: input
+    id: command
+    attributes:
+      label: Exact command
+      placeholder: worktree-shield scan --strict
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `worktree-shield --version` and `git --version`
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of problem
+      options:
+        - False alarm (reported a collision that isn't one)
+        - Missed collision
+        - Wrong certainty (e.g. "confirmed" when it is only possible)
+        - Crash, hang or error
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Worktree setup
+      description: How the worktrees were created (git worktree, workz, wtc, an agent…) and which config files declare the resource.
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Sanitized report
+      description: "`worktree-shield report --format markdown --output -` (redacted by default)"
+      render: markdown
+  - type: input
+    id: system
+    attributes:
+      label: Operating system
+      placeholder: e.g. Ubuntu 26.04, macOS 16, Windows 11
