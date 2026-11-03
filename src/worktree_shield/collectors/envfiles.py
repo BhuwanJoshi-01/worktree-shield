@@ -16,7 +16,7 @@ from worktree_shield.collectors.base import (
     Scope,
     is_absolute_path,
     path_key,
-    tcp_key,
+    port_key,
 )
 from worktree_shield.models import (
     Policy,
@@ -104,4 +104,4 @@ def _port_claim(
     detail = f"{entry.key}={port}"
     if host_entry is not None and host is not None:
         detail += f" ({host_entry.key}={host_entry.value.strip()})"
-    return ResourceClaim(kind, tcp_key(host, port, default), scope.worktree, source, detail)
+    return ResourceClaim(kind, port_key(host, port, default), scope.worktree, source, detail)

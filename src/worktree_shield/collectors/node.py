@@ -12,7 +12,7 @@ import re
 from dataclasses import replace
 from pathlib import PurePosixPath
 
-from worktree_shield.collectors.base import Collected, Scope, tcp_key
+from worktree_shield.collectors.base import Collected, Scope, port_key
 from worktree_shield.models import ResourceClaim, ResourceKind, SkippedFile
 from worktree_shield.names import port_number
 from worktree_shield.parsers.commands import listen_ports
@@ -37,7 +37,7 @@ def collect_package_json(scope: Scope, directory: PurePosixPath, out: Collected)
 
     def claim(port: int, host: str | None, key: tuple[str, str], detail: str) -> ResourceClaim:
         source = scope.source(relative, lines.get(key))
-        resource = tcp_key(host, port)
+        resource = port_key(host, port)
         return ResourceClaim(ResourceKind.LISTEN_PORT, resource, scope.worktree, source, detail)
 
     scripts = data.get("scripts")

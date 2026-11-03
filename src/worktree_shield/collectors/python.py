@@ -15,7 +15,7 @@ from collections.abc import Iterator
 from pathlib import PurePosixPath
 from typing import Any
 
-from worktree_shield.collectors.base import Collected, Scope, tcp_key
+from worktree_shield.collectors.base import Collected, Scope, port_key
 from worktree_shield.models import ResourceClaim, ResourceKind, SkippedFile
 from worktree_shield.names import port_number, port_variable
 from worktree_shield.parsers.commands import PortMention, listen_ports
@@ -45,7 +45,7 @@ def collect_pyproject(scope: Scope, directory: PurePosixPath, out: Collected) ->
                 found.append(
                     ResourceClaim(
                         ResourceKind.LISTEN_PORT,
-                        tcp_key(mention.host, mention.port),
+                        port_key(mention.host, mention.port),
                         scope.worktree,
                         scope.source(relative, line),
                         f"{label}: {mention.fragment}",
