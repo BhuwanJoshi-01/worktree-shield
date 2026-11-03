@@ -9,16 +9,18 @@ from worktree_shield.models import (
     Certainty,
     Confidence,
     Finding,
+    Listener,
     Observation,
     ResourceKind,
     Severity,
     Status,
 )
 from worktree_shield.overlap import Overlap, overlap
-from worktree_shield.rules.common import VERIFY, evidence, plain, plural, port_of
+from worktree_shield.rules.common import VERIFY, evidence, plain, port_of
 from worktree_shield.rules.engine import Context, Rule, confidence_for, status_for
 
 NOT_LOOKED_AT = "Running processes were not looked at"
+SNAPSHOT = "The running processes were looked at once, at the time of the scan."
 _WHY_NOT = "The scan ran without the runtime observation (--no-runtime or include_runtime = false)."
 
 
@@ -49,8 +51,8 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             Severity.HIGH,
             Confidence.HIGH,
             f"Port {port_of(collision.key)} is in use by a server running in another worktree",
-            f"{holders}; {plural(len({c.worktree for c in waiting}), 'other worktree')} "
-            "configure the same port, so their server cannot start while it runs.",
+            f"{holders}; {_configure(len({c.worktree for c in waiting}), 'other ')} the same "
+            "port, so their server cannot start while it runs.",
             resource_key=collision.key,
             certainty=Certainty.CONFIRMED,
             worktrees=collision.worktrees,
@@ -59,35 +61,40 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             recommended_action="Stop the running server first, or start this worktree's "
             "server on another port.",
             verify_command=VERIFY,
-            limitations=("The running processes were looked at once, at the time of the scan.",),
+            limitations=(SNAPSHOT,),
         )
     static = [
         c
         for c in context.snapshot.claims
         if c.kind is ResourceKind.LISTEN_PORT and c.observation is Observation.STATIC
     ]
-    for listener in context.snapshot.runtime.unattributed:
-        key = port_key(listener.address, listener.port, protocol=listener.protocol)
-        matches = [(c, overlap(ResourceKind.LISTEN_PORT, key, c.key)) for c in static]
-        blocked = [c for c, result in matches if result is not Overlap.NONE]
+    by_port: dict[tuple[str, int], list[Listener]] = {}
+    for listener in context.snapshot.runtime.unattributed:  # IPv4 and IPv6 sockets of one port
+        by_port.setdefault((listener.protocol, listener.port), []).append(listener)
+    for (protocol, port), listeners in by_port.items():
+        keys = [port_key(each.address, port, protocol=protocol) for each in listeners]
+        results = [
+            (claim, overlap(ResourceKind.LISTEN_PORT, key, claim.key))
+            for claim in static
+            for key in keys
+        ]
+        blocked = list(dict.fromkeys(c for c, result in results if result is not Overlap.NONE))
         if not blocked:
             continue
         found = True
-        certain = any(result is Overlap.SAME for _, result in matches)
+        certain = any(result is Overlap.SAME for _, result in results)
         certainty = Certainty.CONFIRMED if certain else Certainty.POSSIBLE
-        owner = listener.process or "a process"
-        if listener.pid is not None:
-            owner += f" (pid {listener.pid})"
         worktrees = tuple(dict.fromkeys(c.worktree for c in blocked))
+        owners = "; ".join(dict.fromkeys(_owner(each) for each in listeners))
         yield Finding(
             "WTS-PORT-002",
             status_for(level, certainty),
             Severity.HIGH,
             confidence_for(certainty),
-            f"Port {listener.port} is already in use",
-            f"{owner} listens on it ({listener.note}); {plural(len(worktrees), 'worktree')} "
-            "configure this port, so their server cannot start while it does.",
-            resource_key=key,
+            f"Port {port} is already in use",
+            f"{owners}; {_configure(len(worktrees))} this port, so their server cannot start "
+            "while it does.",
+            resource_key=port_key(listeners[0].address, port, protocol=protocol),
             certainty=certainty,
             worktrees=worktrees,
             sources=tuple(c.source for c in blocked),
@@ -95,7 +102,7 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             recommended_action="Stop that process if it is a leftover dev server, or give "
             "the worktrees another port.",
             verify_command=VERIFY,
-            limitations=("The running processes were looked at once, at the time of the scan.",),
+            limitations=(SNAPSHOT,),
         )
     if not found:
         yield plain(
@@ -104,6 +111,19 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             "No configured port is in use by another worktree or process",
             "Every port the worktrees configure was free, as far as the runtime view shows.",
         )
+
+
+def _configure(count: int, other: str = "") -> str:
+    """ "1 worktree configures" or "3 worktrees configure"."""
+    return f"1 {other}worktree configures" if count == 1 else f"{count} {other}worktrees configure"
+
+
+def _owner(listener: Listener) -> str:
+    """Who listens, in a clause: "uvicorn (pid 42) listens on it; it runs outside …"."""
+    if listener.pid is None:
+        return "A process of another user listens on it"
+    name = listener.process or "A process"
+    return f"{name} (pid {listener.pid}) listens on it; {listener.note}"
 
 
 def _runtime_view(context: Context) -> Iterator[Finding]:
@@ -126,7 +146,6 @@ def _runtime_view(context: Context) -> Iterator[Finding]:
             "The runtime view is incomplete: " + "; ".join(runtime.limitations) + ".",
             recommended_action="Collisions with processes outside this view cannot be ruled "
             "out; the static findings still apply.",
-            limitations=tuple(runtime.limitations),
         )
         return
     yield plain(

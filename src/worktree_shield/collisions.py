@@ -97,7 +97,7 @@ def _reason(kind: ResourceKind, key: str, worktrees: int, claims: list[ResourceC
         return reason
     if kind is ResourceKind.DATABASE:
         return (
-            f"{count} use the database {name}; migrations, seed data and tests of one "
+            f"{count} use the same database; migrations, seed data and tests of one "
             "change the data of the other"
         )
     if kind is ResourceKind.COMPOSE_PROJECT:

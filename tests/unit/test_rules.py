@@ -125,7 +125,7 @@ def test_a_configured_port_held_outside_the_worktrees() -> None:
     (blocker,) = found["WTS-PORT-002"]
     assert blocker.status is Status.FAIL
     assert blocker.summary == "Port 5432 is already in use"
-    assert "owned by a process of another user" in blocker.reason
+    assert blocker.reason.startswith("A process of another user listens on it;")
 
 
 def test_without_runtime_the_runtime_rules_are_not_tested() -> None:
@@ -146,7 +146,7 @@ def test_runtime_limits_are_unknown() -> None:
             ResourceKind.DATABASE,
             "db://postgres/localhost:5432/app_dev",
             "WTS-DB-001",
-            "The database app_dev on localhost:5432 is used by 2 worktrees",
+            "The Postgres database app_dev on localhost:5432 is used by 2 worktrees",
         ),
         (
             ResourceKind.COMPOSE_PROJECT,
@@ -272,7 +272,7 @@ def test_every_rule_runs_and_ids_are_unique() -> None:
         ("db://sqlite//srv/app.db", "The SQLite database /srv/app.db is used by 2 worktrees"),
         (
             "db://postgres/localhost:5432/?",
-            "An unnamed database on localhost:5432 is used by 2 worktrees",
+            "An unnamed Postgres database on localhost:5432 is used by 2 worktrees",
         ),
     ],
 )
@@ -295,7 +295,7 @@ def test_a_known_process_outside_the_worktrees_and_a_host_name() -> None:
     found = diagnose(claim(A, PORT, "tcp://localhost:8000"), runtime=runtime)
     (blocker,) = found["WTS-PORT-002"]
     assert blocker.reason.startswith(
-        "uvicorn (pid 42) listens on it (it runs outside every worktree)"
+        "uvicorn (pid 42) listens on it; it runs outside every worktree; 1 worktree configures"
     )
     assert blocker.certainty is not None
     assert blocker.certainty.value == "possible"  # localhost may not be 127.0.0.1

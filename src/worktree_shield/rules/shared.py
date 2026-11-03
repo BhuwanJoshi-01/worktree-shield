@@ -28,7 +28,7 @@ class _Kind:
     level: Callable[[Policy], PolicyLevel]
     severity: Severity
     summary: Callable[[Collision, int], str]
-    action: str
+    action: str | Callable[[Collision], str]
     limitation: str
     nothing: str
     clean: str
@@ -38,15 +38,27 @@ def _port_summary(collision: Collision, count: int) -> str:
     return f"Port {port_of(collision.key)} is configured in {count} worktrees"
 
 
+_ENGINES = {"postgres": "Postgres", "mysql": "MySQL", "redis": "Redis", "mongodb": "MongoDB"}
+
+
 def _database_summary(collision: Collision, count: int) -> str:
     rest = name_of(collision.key)
     engine, _, target = rest.partition("/")
     if engine == "sqlite":
         return f"The SQLite database {target} is used by {count} worktrees"
     server, _, database = target.rpartition("/")
+    label = _ENGINES.get(engine, engine)
     if database == "?":
-        return f"An unnamed database on {server} is used by {count} worktrees"
-    return f"The database {database} on {server} is used by {count} worktrees"
+        return f"An unnamed {label} database on {server} is used by {count} worktrees"
+    return f"The {label} database {database} on {server} is used by {count} worktrees"
+
+
+def _port_action(collision: Collision) -> str:
+    port = port_of(collision.key) or 0
+    return (
+        f"Give each worktree its own port, for example in its own .env (PORT={port} in "
+        f"one, PORT={port + 1} in the other), or run one server at a time."
+    )
 
 
 KINDS = (
@@ -57,8 +69,7 @@ KINDS = (
         lambda p: p.shared_host_ports,
         Severity.HIGH,
         _port_summary,
-        "Give each worktree its own port, for example in its own .env "
-        "(PORT=5173 in one, PORT=5174 in the other), or run one server at a time.",
+        _port_action,
         "The servers collide only when both run at the same time on this host.",
         "No worktree configures a port to listen on",
         "No port is configured in more than one worktree",
@@ -145,6 +156,10 @@ def _allowed(kind: ResourceKind, collision: Collision, policy: Policy) -> str | 
     return None
 
 
+def _action(spec: _Kind, collision: Collision) -> str:
+    return spec.action if isinstance(spec.action, str) else spec.action(collision)
+
+
 def _check(spec: _Kind) -> Callable[[Context], Iterator[Finding]]:
     def check(context: Context) -> Iterator[Finding]:
         if not any(c.kind is spec.kind for c in context.snapshot.claims):
@@ -189,7 +204,7 @@ def _check(spec: _Kind) -> Callable[[Context], Iterator[Finding]]:
                 worktrees=collision.worktrees,
                 sources=tuple(claim.source for claim in collision.claims),
                 evidence=evidence(collision.claims),
-                recommended_action=spec.action,
+                recommended_action=_action(spec, collision),
                 verify_command=VERIFY,
                 limitations=(spec.limitation,),
                 caused_by=caused_by,
