@@ -35,3 +35,8 @@ for shared ports, databases, Docker Compose names and absolute paths.
   parsing; credentials never reach the output. Files are read as data inside
   the worktree only, with a size cap; nested worktrees and submodules are not
   counted twice. See docs/what-is-read.md.
+- Docker Compose in `resources`: project names (with Compose's precedence and
+  normalisation), fixed container names, published host ports, absolute bind
+  mounts and named volumes from `compose.yaml` and its override file, with
+  `${VAR:-default}` interpolation from `.env` when env files are read. Parsed
+  with PyYAML's safe loader; Docker is never contacted.

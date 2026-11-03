@@ -29,6 +29,7 @@ Bare and prunable worktrees have no files and are left out.
 | `package.json` | Listen ports in `scripts` and npm's `config.port`. |
 | `vite.config.{js,ts,mjs,mts,cjs,cts}` | `server.port`, `preview.port` (with `host` and `strictPort`), absolute `cacheDir` and `build.outDir`, when they are literal values. |
 | `pyproject.toml` | Listen ports in the tasks of poe, taskipy, pdm, hatch and rye, including a task's `env`. |
+| `compose.yaml` and the other Compose file names, plus the override file | Project name, `container_name`, published host ports, absolute bind mounts and named volumes. See below. |
 
 From `.env` files a value is kept only as one of these, and every other value is dropped right after parsing:
 
@@ -65,6 +66,35 @@ Parts of a command that run a client (`psql`, `redis-cli`, `ssh`, `curl`, `docke
 never counts. Only the fragment that names the port is kept, never the whole command, which may hold other
 values.
 
+## Docker Compose
+
+Files are chosen the way Compose chooses them:
+
+- the first of `compose.yaml`, `compose.yml`, `docker-compose.yml` and `docker-compose.yaml` in a directory;
+- plus the first of `compose.override.yml`, `compose.override.yaml`, `docker-compose.override.yml` and
+  `docker-compose.override.yaml` next to it.
+
+They are parsed with PyYAML's safe loader, which builds plain data only: Python tags are refused. Docker is
+never contacted, so the result is the same whether the daemon is running or not.
+
+- **Project name:** containers, networks and named volumes are all prefixed with it, so two worktrees with the
+  same project name share all of them. Compose's precedence is followed: `COMPOSE_PROJECT_NAME` from `.env`
+  (when env files are read), then the last non-empty `name:`, then the directory name. The name is
+  normalised as Compose does it: lower case, only `a-z 0-9 _ -`. A `name:` in the file, or a compose file in a
+  subdirectory such as `infra/`, gives every worktree the same project name. `COMPOSE_PROJECT_NAME` set in the
+  shell, or in a `.env` that was not read, overrides what is shown.
+- **`container_name`:** a fixed name is global on a Docker daemon.
+- **Ports:** host ports published in the short or long syntax, with ranges and protocols. A container port alone
+  gets a free host port from Docker and is not listed.
+- **Bind mounts:** absolute and `~` host paths that are not read-only. Relative paths belong to each worktree.
+- **Named volumes:** `<project>_<name>`, or the volume's own `name:`, or its key when `external: true`.
+
+Values written with `${VAR}` are filled in from the `.env` next to the compose file when env files are read.
+Otherwise defaults (`${WEB_PORT:-8080}`) are used, assuming the variable is not set in the shell. A value that
+needs a variable no file sets, or that is not valid Compose, is listed under *Could not be identified*. In
+override files, a service's last `container_name` counts; ports and volumes of all files are listed together.
+A compose file that cannot be parsed yields nothing and is listed under *Not read*.
+
 ## What is not read
 
 Not read in this version:
@@ -72,4 +102,5 @@ Not read in this version:
 - implicit defaults (Vite's 5173 when no port is set; it moves to the next free port anyway);
 - ports computed in code (`Number(process.env.PORT)`);
 - other dev-server configuration;
-- Docker Compose files. Compose support is planned; see [the roadmap](roadmap.md).
+- `COMPOSE_FILE`, `-f` and `-p` options given on the command line;
+- Compose `profiles`, `network_mode: host` and network names.

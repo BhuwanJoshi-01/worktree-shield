@@ -40,10 +40,13 @@ src/worktree_shield/
                   repr), dburl.py (engine/host/port/database; credentials dropped; uncertain
                   host = DatabaseURLError, which never repeats the URL), commands.py (listen
                   ports in script command lines; clients skipped; fragment only), jstext.py
-                  (JS with comments/strings/regexes blanked, positions kept)
+                  (JS with comments/strings/regexes blanked, positions kept), interpolate.py
+                  (Compose ${VAR:-x}; unset = assumed, needed without default = missing),
+                  compose.py (ports/volumes syntax)
   collectors/     base.py (Scope: root + worktree name + cap, read() records SkippedFile;
                   Collected; tcp_key/path_key), envfiles.py, node.py (package.json),
-                  vite.py, python.py (poe/taskipy/pdm/hatch/rye), layout.py (which
+                  vite.py, python.py (poe/taskipy/pdm/hatch/rye), compose.py (compose-go file
+                  choice + project-name precedence; SafeLoader only, pure Python), layout.py (which
                   directories: 3 deep, never into another .git, skip list), static.py
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
@@ -55,7 +58,7 @@ tests/
                   tree_digest() to prove a scan wrote nothing, same_path() for Windows paths
   fixtures/git/   real porcelain captures (binary in .gitattributes: NULs and a newline in a path)
   fixtures/policy/ hand-written policy files
-  fixtures/env/   hand-written .env files (no real credentials); vite/, python/: hand-written configs
+  fixtures/env/   hand-written .env files (no real credentials); vite/, python/, compose/: configs
   unit/           unit tests; Git fixtures are real temporary repositories
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
