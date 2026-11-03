@@ -165,6 +165,21 @@ class Worktree:
 
 
 @dataclass(frozen=True, slots=True)
+class Repository:
+    """The repository the scan started in, and every worktree that shares its ``.git``.
+
+    ``common_dir`` is the shared Git directory, ``current`` the top of the worktree the
+    scan started in (``None`` in a bare repository), ``worktrees`` Git's own list of all
+    worktrees attached to ``common_dir``, nothing found by searching the disk.
+    """
+
+    common_dir: str
+    current: str | None
+    bare: bool
+    worktrees: tuple[Worktree, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
 
