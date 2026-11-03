@@ -8,8 +8,6 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-004")
-
 SECRET = "S3cr3t-Canary"
 
 
@@ -155,3 +153,17 @@ def test_any_value_is_parsed_or_refused_without_echoing_it(value: str) -> None:
     except DatabaseURLError as error:
         message = str(error)
     assert len(value) < 12 or value not in message
+
+
+@pytest.mark.parametrize(
+    ("url", "key"),
+    [
+        ("sqlite:////srv/data/app.db", "db://sqlite//srv/data/app.db"),
+        ("postgres://[::1]:5433/app", "db://postgres/[::1]:5433/app"),
+        ("mongodb+srv://cluster0.example.net/blog", "db://mongodb/cluster0.example.net/blog"),
+        ("mongodb://b:2,a:1/blog", "db://mongodb/a:1,b:2/blog"),
+        ("POSTGRES://LOCALHOST/app?host=/Run/PG", "db://postgres/unix:/Run/PG:5432/app"),
+    ],
+)
+def test_more_keys(url: str, key: str) -> None:
+    assert _parse(url).key == key
