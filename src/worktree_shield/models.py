@@ -269,6 +269,17 @@ class SkippedFile:
 
 
 @dataclass(frozen=True, slots=True)
+class UnreadableValue:
+    """A value that names a resource but could not be read safely, such as a database
+    URL whose host is uncertain. ``name`` is the variable or field, never its value."""
+
+    kind: ResourceKind
+    source: SourceRef
+    name: str
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
 
@@ -281,8 +292,9 @@ class Snapshot:
     """Everything one scan observed and concluded; the input of every renderer.
 
     ``repository`` is ``None`` when discovery failed (see ``probe_failures``). ``policy``
-    is the effective policy, ``claims`` every resource found in the worktrees and
-    ``skipped`` the configuration files that could not be read.
+    is the effective policy, ``claims`` every resource found in the worktrees,
+    ``skipped`` the configuration files that could not be read and ``unreadable`` the
+    values that name a resource without saying safely which one.
     """
 
     tool_version: str
@@ -292,6 +304,7 @@ class Snapshot:
     policy: Policy | None = None
     claims: tuple[ResourceClaim, ...] = ()
     skipped: tuple[SkippedFile, ...] = ()
+    unreadable: tuple[UnreadableValue, ...] = ()
     probe_failures: tuple[ProbeFailure, ...] = ()
     findings: tuple[Finding, ...] = ()
     redactions: tuple[RedactionCount, ...] = ()
