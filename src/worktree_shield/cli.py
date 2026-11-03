@@ -17,9 +17,9 @@ from worktree_shield import __version__
 from worktree_shield.config import PolicyError, policy_of
 from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
-from worktree_shield.orchestrator import inspect_worktrees
+from worktree_shield.orchestrator import inspect_resources, inspect_worktrees
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
-from worktree_shield.reports.terminal import render_policy, render_worktrees
+from worktree_shield.reports.terminal import render_policy, render_resources, render_worktrees
 from worktree_shield.runner import SubprocessRunner
 
 HELP = (
@@ -115,6 +115,44 @@ def policy(
         redactor.text(current) if current is not None else None,
         Console(highlight=False),
     )
+
+
+@app.command()
+def resources(
+    repo: Annotated[
+        Path,
+        typer.Option(
+            "--repo", metavar="PATH", help="A directory inside the repository (default: here)."
+        ),
+    ] = Path(),
+    include_env: Annotated[
+        bool,
+        typer.Option(
+            "--include-env",
+            help="Also read .env and .env.local; only ports, database servers and paths are kept.",
+        ),
+    ] = False,
+) -> None:
+    """List the ports, databases and paths each worktree declares in its configuration.
+
+    Reads .env templates, package.json, vite.config.* and pyproject.toml as data; nothing
+    is run. Resources used by more than one worktree are marked. Exits with 2 for a
+    policy file that cannot be used and 3 outside a Git repository.
+    """
+    redactor = Redactor(RedactionContext.current())
+    try:
+        snapshot = inspect_resources(
+            SubprocessRunner(), repo, include_env_files=True if include_env else None
+        )
+    except NotARepositoryError:
+        typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)
+        raise typer.Exit(ExitCode.CONTEXT_UNAVAILABLE) from None
+    except PolicyError as error:
+        typer.echo(f"worktree-shield: {redactor.text(str(error))}", err=True)
+        raise typer.Exit(ExitCode.ERROR) from None
+    render_resources(redact_snapshot(snapshot), Console(highlight=False))
+    if snapshot.repository is None:
+        raise typer.Exit(ExitCode.ERROR)
 
 
 def main() -> None:
