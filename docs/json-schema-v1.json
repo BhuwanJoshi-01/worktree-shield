@@ -1,0 +1,724 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/json-schema-v1.json",
+  "title": "worktree-shield report, schema version 1",
+  "description": "Output of worktree-shield scan --format json. Fields are never removed or renamed within a schema version.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tool_version",
+    "created_at",
+    "schema_version",
+    "repository",
+    "policy",
+    "claims",
+    "skipped",
+    "unreadable",
+    "runtime",
+    "probe_failures",
+    "findings",
+    "redactions",
+    "summary"
+  ],
+  "properties": {
+    "tool_version": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "repository": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/repository"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "policy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/policy"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "skipped": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/skipped_file"
+      }
+    },
+    "unreadable": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unreadable_value"
+      }
+    },
+    "runtime": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/runtime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "probe_failures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/probe_failure"
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "redactions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/redaction_count"
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    }
+  },
+  "$defs": {
+    "certainty": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "probable",
+        "possible",
+        "unknown"
+      ]
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "key",
+        "worktree",
+        "source",
+        "detail",
+        "observation",
+        "strict"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/resource_kind"
+        },
+        "key": {
+          "type": "string"
+        },
+        "worktree": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "observation": {
+          "$ref": "#/$defs/observation"
+        },
+        "strict": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "key",
+        "value"
+      ],
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "failure_kind": {
+      "type": "string",
+      "enum": [
+        "not_found",
+        "permission_denied",
+        "timeout",
+        "nonzero_exit",
+        "malformed_output",
+        "os_error",
+        "probe_error"
+      ]
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "severity",
+        "confidence",
+        "summary",
+        "reason",
+        "resource_key",
+        "certainty",
+        "worktrees",
+        "sources",
+        "evidence",
+        "recommended_action",
+        "verify_command",
+        "limitations",
+        "caused_by"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^WTS-[A-Z]+-[0-9]{3}$"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "severity": {
+          "$ref": "#/$defs/severity"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "resource_key": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "certainty": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/certainty"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "recommended_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verify_command": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "caused_by": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^WTS-[A-Z]+-[0-9]{3}$"
+        }
+      }
+    },
+    "listener": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "address",
+        "port",
+        "pid",
+        "process",
+        "note"
+      ],
+      "properties": {
+        "protocol": {
+          "enum": [
+            "tcp",
+            "udp"
+          ]
+        },
+        "address": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "pid": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "process": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "observation": {
+      "type": "string",
+      "enum": [
+        "static",
+        "runtime"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "include_runtime",
+        "include_env_files",
+        "max_file_bytes",
+        "shared_host_ports",
+        "shared_database",
+        "shared_compose_projects",
+        "fixed_container_names",
+        "shared_absolute_paths",
+        "allow_ports",
+        "allow_paths",
+        "source"
+      ],
+      "properties": {
+        "include_runtime": {
+          "type": "boolean"
+        },
+        "include_env_files": {
+          "type": "boolean"
+        },
+        "max_file_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "shared_host_ports": {
+          "$ref": "#/$defs/policy_level"
+        },
+        "shared_database": {
+          "$ref": "#/$defs/policy_level"
+        },
+        "shared_compose_projects": {
+          "$ref": "#/$defs/policy_level"
+        },
+        "fixed_container_names": {
+          "$ref": "#/$defs/policy_level"
+        },
+        "shared_absolute_paths": {
+          "$ref": "#/$defs/policy_level"
+        },
+        "allow_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        },
+        "allow_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "policy_level": {
+      "type": "string",
+      "enum": [
+        "allow",
+        "warn",
+        "deny"
+      ]
+    },
+    "probe_failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "probe",
+        "kind",
+        "detail"
+      ],
+      "properties": {
+        "probe": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/failure_kind"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
+    "redaction_count": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "count"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "common_dir",
+        "current",
+        "bare",
+        "worktrees"
+      ],
+      "properties": {
+        "common_dir": {
+          "type": "string"
+        },
+        "current": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bare": {
+          "type": "boolean"
+        },
+        "worktrees": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/worktree"
+          }
+        }
+      }
+    },
+    "resource_kind": {
+      "type": "string",
+      "enum": [
+        "listen_port",
+        "client_endpoint",
+        "database",
+        "compose_project",
+        "container_name",
+        "volume",
+        "absolute_path"
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unattributed",
+        "limitations"
+      ],
+      "properties": {
+        "unattributed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/listener"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "skipped_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "reason"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worktree",
+        "path",
+        "line"
+      ],
+      "properties": {
+        "worktree": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "line": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "warn",
+        "fail",
+        "unknown",
+        "not_applicable",
+        "not_tested"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "worktrees",
+        "counts",
+        "worst",
+        "strict_failure"
+      ],
+      "properties": {
+        "worktrees": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pass",
+            "warn",
+            "fail",
+            "unknown",
+            "not_applicable",
+            "not_tested"
+          ],
+          "properties": {
+            "pass": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "warn": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "fail": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unknown": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "not_applicable": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "not_tested": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "worst": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/status"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "strict_failure": {
+          "type": "boolean"
+        }
+      }
+    },
+    "unreadable_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source",
+        "name",
+        "reason"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/resource_kind"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "worktree": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "head",
+        "branch",
+        "bare",
+        "detached",
+        "locked",
+        "prunable"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "head": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "branch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "bare": {
+          "type": "boolean"
+        },
+        "detached": {
+          "type": "boolean"
+        },
+        "locked": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prunable": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
