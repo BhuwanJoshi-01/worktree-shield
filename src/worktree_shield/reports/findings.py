@@ -14,6 +14,7 @@ from rich.table import Table
 from rich.text import Text
 
 from worktree_shield.models import Finding, Snapshot, Status
+from worktree_shield.plan import Suggestion
 from worktree_shield.reports.terminal import (
     display_path,
     redaction_line,
@@ -136,3 +137,37 @@ def _render_problem(finding: Finding, label: Callable[[str], str], console: Cons
         console.print(Text(f"        Check: {finding.verify_command}", style="dim"))
     for limitation in finding.limitations:
         console.print(Text(f"        Note: {limitation}", style="dim"))
+
+
+def render_plan(snapshot: Snapshot, suggestions: list[Suggestion], console: Console) -> None:
+    """The suggested changes, grouped by worktree; nothing is applied."""
+    console.print(Text(f"worktree-shield {snapshot.tool_version}", style="bold"))
+    if snapshot.repository is None:
+        render_failed_discovery(snapshot, console)
+        return
+    if not suggestions:
+        console.print(Text("Nothing to change: no collision needs attention."))
+        return
+    name, _ = worktree_names(snapshot.repository)
+    console.print(
+        Text(
+            "Suggested changes. Nothing was changed: make them yourself, then run "
+            "worktree-shield scan --strict."
+        )
+    )
+    by_worktree: dict[str, list[Suggestion]] = {}
+    for suggestion in suggestions:
+        by_worktree.setdefault(suggestion.worktree, []).append(suggestion)
+    for worktree, items in by_worktree.items():
+        console.print()
+        console.print(Text(name(worktree), style="bold"))
+        table = Table(box=None, show_edge=False, pad_edge=False, show_header=False)
+        table.add_column("indent", width=2)
+        table.add_column("Where", no_wrap=True)
+        table.add_column("Change", overflow="fold")
+        table.add_column("Rule", no_wrap=True, style="dim")
+        for item in items:
+            table.add_row(
+                Text(""), Text(display_path(item.where)), Text(item.change), Text(item.rule)
+            )
+        console.print(table)

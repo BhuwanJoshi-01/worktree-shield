@@ -21,8 +21,9 @@ from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
 from worktree_shield.models import Snapshot, Status
 from worktree_shield.orchestrator import diagnose, inspect_resources, inspect_worktrees
+from worktree_shield.plan import make_plan
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
-from worktree_shield.reports.findings import render_scan
+from worktree_shield.reports.findings import render_plan, render_scan
 from worktree_shield.reports.json_report import render_json
 from worktree_shield.reports.markdown import render_markdown
 from worktree_shield.reports.sarif import render_sarif
@@ -205,6 +206,25 @@ def report(
     else:
         sys.stdout.write(rendered)
     _finish(diagnosed, strict)
+
+
+@app.command()
+def plan(
+    repo: Annotated[Path, _REPO_OPTION] = Path(),
+    scope: Annotated[Scope, _SCOPE_OPTION] = Scope.ALL,
+    include_env: Annotated[bool, _ENV_OPTION] = False,
+) -> None:
+    """Suggest a change per worktree that would resolve each collision; apply none.
+
+    The current worktree keeps its values; every other one gets a free port, its own
+    database and Compose project name. Values from .env templates are overridden in
+    the worktree's .env. Nothing is written.
+    """
+    diagnosed = _diagnosed(repo, scope, include_env)
+    redacted = redact_snapshot(diagnosed)
+    render_plan(redacted, make_plan(redacted), Console(highlight=False))
+    if diagnosed.repository is None:
+        raise typer.Exit(ExitCode.ERROR)
 
 
 @app.command()
