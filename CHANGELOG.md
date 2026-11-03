@@ -20,3 +20,9 @@ for shared ports, databases, Docker Compose names and absolute paths.
   detached, bare and prunable ones, with paths containing spaces, Unicode or
   newlines. git runs with optional locks off, no terminal prompt and no
   fsmonitor, so nothing in `.git` is written. Exits 3 outside a repository.
+- `.worktree-shield.toml` policy (schema version 1): levels `allow`/`warn`/`deny`
+  for shared host ports, databases, Compose projects, container names and
+  absolute paths; scan settings; allow lists for shared client endpoints and
+  paths. Read as TOML data with every key checked; unknown keys are errors.
+  `worktree-shield policy [--repo PATH]` shows the effective policy and exits 2
+  for a file it cannot use. See docs/policy.md.
