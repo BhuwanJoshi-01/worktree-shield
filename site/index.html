@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Worktree Shield</title>
+  <meta name="description" content="Find the ports, databases and Docker resources your Git worktrees share before your agents collide. Read-only, open source.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Worktree Shield</h1>
+    <p class="tagline">Find the ports, databases and Docker resources your Git worktrees share, before your agents collide.</p>
+    <p class="links">
+      <a href="https://github.com/BhuwanJoshi-01/worktree-shield">Source on GitHub</a>
+      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md">Rules</a>
+      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/cli.md">Commands</a>
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <p>Every worktree gets its own checkout, but not its own infrastructure. Three worktrees still start a dev
+        server on <code>5173</code>, migrate the same <code>app_dev</code> database and run one Docker Compose
+        project. Worktree Shield reads their configuration (and, if you like, what is running), and reports each
+        shared resource with the file and line it came from and how certain the collision is.</p>
+      <figure>
+        <img src="assets/scan.svg" alt="worktree-shield scan on three worktrees: port 5173 fails WTS-PORT-001, the database app_dev and the Compose project app warn, and the shared volume follows from the project.">
+        <figcaption>The example repository from the source: three worktrees that collide.</figcaption>
+      </figure>
+    </section>
+
+    <section>
+      <h2>Install</h2>
+      <pre><code>uv tool install git+https://github.com/BhuwanJoshi-01/worktree-shield
+worktree-shield scan            # in any worktree of your repository
+worktree-shield scan --strict   # exit 1 when a finding fails, for CI and agent preflight
+worktree-shield plan            # one change per worktree that would resolve it</code></pre>
+      <p>Needs Python 3.11 or newer and git. Tested on Linux and Windows; on macOS the runtime view sees only
+        your own processes.</p>
+    </section>
+
+    <section class="promises">
+      <h2>What it promises</h2>
+      <ul>
+        <li><strong>Read-only.</strong> Nothing in your worktrees or <code>.git</code> is written, locked or pruned;
+          no process is stopped, no container touched.</li>
+        <li><strong>Nothing from the repository runs.</strong> Scripts, Vite configs and Compose files are read as
+          text and data, never executed.</li>
+        <li><strong>No secrets in output.</strong> Database URLs lose their credentials while they are parsed;
+          <code>.env</code> is read only when you ask.</li>
+        <li><strong>Honest certainty.</strong> Two configs naming one port is <em>probable</em>; only a running
+          server makes it <em>confirmed</em>, and a guess never fails CI.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>MIT licensed. Bug reports and test reports are very welcome on
+      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/issues">GitHub</a>.</p>
+  </footer>
+</body>
+</html>
