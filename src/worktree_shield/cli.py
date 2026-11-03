@@ -21,12 +21,15 @@ from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
 from worktree_shield.models import Snapshot, Status
 from worktree_shield.orchestrator import diagnose, inspect_resources, inspect_worktrees
+from worktree_shield.plan import make_plan
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
-from worktree_shield.reports.findings import render_scan
+from worktree_shield.reports.findings import render_plan, render_scan
 from worktree_shield.reports.json_report import render_json
 from worktree_shield.reports.markdown import render_markdown
 from worktree_shield.reports.sarif import render_sarif
 from worktree_shield.reports.terminal import render_policy, render_resources, render_worktrees
+from worktree_shield.rules.catalog import builtin_rules
+from worktree_shield.rules.explain import explanation
 from worktree_shield.runner import SubprocessRunner
 
 HELP = (
@@ -203,6 +206,46 @@ def report(
     else:
         sys.stdout.write(rendered)
     _finish(diagnosed, strict)
+
+
+@app.command()
+def plan(
+    repo: Annotated[Path, _REPO_OPTION] = Path(),
+    scope: Annotated[Scope, _SCOPE_OPTION] = Scope.ALL,
+    include_env: Annotated[bool, _ENV_OPTION] = False,
+) -> None:
+    """Suggest a change per worktree that would resolve each collision; apply none.
+
+    The current worktree keeps its values; every other one gets a free port, its own
+    database and Compose project name. Values from .env templates are overridden in
+    the worktree's .env. Nothing is written.
+    """
+    diagnosed = _diagnosed(repo, scope, include_env)
+    redacted = redact_snapshot(diagnosed)
+    render_plan(redacted, make_plan(redacted), Console(highlight=False))
+    if diagnosed.repository is None:
+        raise typer.Exit(ExitCode.ERROR)
+
+
+@app.command()
+def explain(
+    rule_id: Annotated[str, typer.Argument(metavar="RULE", help="A rule ID such as WTS-PORT-001.")],
+) -> None:
+    """Explain a rule: what it finds, which policy key decides it, how to fix it."""
+    text = explanation(rule_id)
+    if text is None:
+        typer.echo(
+            f"worktree-shield: no rule {rule_id}; worktree-shield rules lists them", err=True
+        )
+        raise typer.Exit(ExitCode.ERROR)
+    sys.stdout.write(text)
+
+
+@app.command(name="rules")
+def list_rules() -> None:
+    """List every rule with its ID; worktree-shield explain RULE says more."""
+    for rule in builtin_rules():
+        typer.echo(f"{rule.id:<16} {rule.title}")
 
 
 @app.command()
