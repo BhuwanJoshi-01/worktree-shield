@@ -1,0 +1,27 @@
+# Task runner definitions in the shapes each tool documents; written by hand.
+[project]
+name = "api"
+version = "0.1.0"
+
+[tool.poe.tasks]
+serve = "uvicorn api.main:app --port 8000"
+docs = { cmd = "mkdocs serve -a 127.0.0.1:8001" }
+check = ["ruff check .", "pytest"]
+
+[tool.poe.tasks.worker]
+cmd = "celery -A api worker"
+env = { PORT = "8002", DB_PORT = "5432" }
+
+[tool.taskipy.tasks]
+dev = { cmd = "python manage.py runserver 8003", help = "Django dev server" }
+
+[tool.pdm.scripts]
+start = { cmd = ["gunicorn", "-b", "0.0.0.0:8004", "api.wsgi"] }
+shell-task = { shell = "PORT=8005 python -m api" }
+all = { composite = ["lint", "python -m http.server 8006"] }
+
+[tool.hatch.envs.default.scripts]
+web = ["npm ci", "npx vite --port 5173 --strictPort"]
+
+[tool.rye.scripts]
+"api:dev" = { chain = ["migrate", "uvicorn api:app --port 8007"] }
