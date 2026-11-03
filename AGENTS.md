@@ -32,6 +32,8 @@ src/worktree_shield/
   exit_codes.py   ExitCode: 0 ok, 1 strict, 2 error, 3 not in a Git repository, 130 interrupted
   overlap.py      overlap(kind, a, b) -> same/possible/none: */0.0.0.0/:: wildcards (dual-stack),
                   localhost vs addresses, loopback DB servers, normalised and nested paths
+  plan.py         make_plan(): suggestions only (the current worktree keeps its values; one
+                  new port per worktree and old port; .env overrides for template values)
   collisions.py   find_collisions(claims): connected components over overlap(), more than one
                   worktree; certainty confirmed (runtime) / probable / possible; reasons
   orchestrator.py inspect_worktrees(), inspect_resources(): discovery + policy + static
@@ -61,7 +63,8 @@ src/worktree_shield/
   rules/          engine.py (Rule, Context, evaluate, status_for: deny fails probable/confirmed only),
                   catalog.py (order), shared.py (collision rules), runtime.py (PORT-002,
                   RUNTIME-001), context.py (DB-002, CONFIG-001, ENV-001, GIT-002, POLICY-001);
-                  docs/rules.md lists every rule (a test compares it with the catalog)
+                  docs/rules.md lists every rule (a test compares it with the catalog);
+                  rules.md is a copy shipped for explain: edit docs/rules.md, copy it over
   reports/        terminal.py (plain Text; display_path() escapes control characters;
                   worktree_names()), findings.py (scan report; caused_by shown under the cause)
                   json_report.py (+ summary; docs/json-schema-v1.json: change both or neither),
@@ -81,6 +84,7 @@ tests/
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
 docs/what-is-read.md  every file and directory the collectors read, and what they keep
+docs/cli.md       every command, option and exit code
 docs/rules.md     every WTS rule, how status follows from policy level and certainty
 docs/json-output.md   JSON summary fields, SARIF mapping, Markdown; json-schema-v1.json
 examples/         conflicting-worktrees/build.py: three colliding worktrees (--fixed: none)

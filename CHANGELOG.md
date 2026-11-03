@@ -58,3 +58,7 @@ for shared ports, databases, Docker Compose names and absolute paths.
   CI. See docs/json-output.md.
 - `examples/conflicting-worktrees/build.py`: three worktrees sharing a port, a
   database and a Compose project, and `--fixed` for the same repository without.
+- `worktree-shield plan`: one suggested change per worktree and claim (a free
+  port, a database and Compose project name of its own, overrides in `.env`
+  for values from templates), never applied. `worktree-shield explain RULE`
+  and `worktree-shield rules`. See docs/cli.md.
