@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-005")
-
 
 def _collect(root: Path, policy: Policy | None = None, directory: str = "") -> Any:
     from worktree_shield.collectors.base import Collected, Scope
@@ -147,3 +145,92 @@ def test_python_tags_are_never_constructed(tmp_path: Path) -> None:
     (tmp_path / "compose.yaml").write_text("name: !!python/object/apply:os.system ['true']\n")
     out = _collect(tmp_path)
     assert [s.reason for s in out.skipped] == ["is not valid YAML"]
+
+
+EDGES = """\
+x-base: &base
+  container_name: from-anchor
+services:
+  merged:
+    <<: *base
+  odd:
+    container_name: 5
+    ports:
+      - target: 80
+        published: "${NOPE}"
+    volumes:
+      - ${DATA_DIR}:/data
+      - ./data:/data
+      - ~/.cache/shop:/cache
+      - type: tmpfs
+        target: /run/scratch
+      - fixed:/fixed
+  empty:
+    container_name: ""
+  invalid:
+    container_name: "${}"
+volumes:
+  fixed:
+    name: ${VOLUME_NAME:-shop-shared}
+"""
+
+
+def test_edges(tmp_path: Path) -> None:
+    (tmp_path / "compose.yaml").write_text(EDGES)
+    (tmp_path / ".env").write_text("BASE=8000\nWEB=${BASE}\nGONE=${NOPE}\nVOLUME_NAME=${BASE}-v\n")
+    out = _collect(tmp_path, Policy(include_env_files=True))
+    claims = {(c.key, c.source.line) for c in out.claims}
+    assert claims == {
+        (f"compose-project://{tmp_path.name.lower()}", None),
+        ("container://from-anchor", 2),  # through a merge key: the line of the anchor's value
+        ("path://~/.cache/shop", 14),
+        ("volume://8000-v", 17),
+    }
+    assert _unreadable(out) == {
+        (
+            "listen_port",
+            "services.odd.ports[0]",
+            9,
+            "depends on NOPE, which no file that was read sets",
+        ),
+        (
+            "absolute_path",
+            "services.odd.volumes[0]",
+            12,
+            "depends on DATA_DIR, which no file that was read sets",
+        ),
+        (
+            "container_name",
+            "services.invalid.container_name",
+            21,
+            "has an invalid ${...} reference",
+        ),
+    }
+
+
+def test_no_compose_file_and_an_oversized_one(tmp_path: Path) -> None:
+    assert _collect(tmp_path).claims == []
+    (tmp_path / "compose.yaml").write_text("name: x\n" + "#" * 100 + "\n")
+    out = _collect(tmp_path, Policy(max_file_bytes=50))
+    assert out.claims == []
+    assert [s.reason for s in out.skipped] == ["is larger than 50 bytes"]
+
+
+def test_lines_of_odd_shapes() -> None:
+    import yaml
+
+    from worktree_shield.collectors.compose import _line
+
+    node = yaml.compose("a: 1\nb: [x]\n", Loader=yaml.SafeLoader)
+    assert node is not None
+    assert _line(node, "a", "b") is None
+    assert _line(node, "b", 3) is None
+    assert _line(node, "b", 0) == 2
+
+
+def test_named_pipes_are_no_shared_resource(tmp_path: Path) -> None:
+    (tmp_path / "compose.yaml").write_text(
+        "services:\n  ci:\n    volumes:\n"
+        "      - type: npipe\n        source: '\\\\.\\pipe\\docker_engine'\n        target: /x\n"
+    )
+    assert {c.kind.value for c in _collect(tmp_path).claims} == {"compose_project"}
