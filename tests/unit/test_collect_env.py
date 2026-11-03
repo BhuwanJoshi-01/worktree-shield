@@ -172,5 +172,5 @@ def test_details_say_what_was_read(tmp_path: Path) -> None:
     ],
 )
 def test_only_literal_hosts_narrow_a_port(tmp_path: Path, host: str, key: str) -> None:
-    (tmp_path / ".env.example").write_text(f"HOST={host}\nPORT=3000\n")
+    (tmp_path / ".env.example").write_text(f"HOST={host}\nPORT=3000\n", encoding="utf-8")
     assert {c.key for c in _collect(tmp_path).claims} == {key}
