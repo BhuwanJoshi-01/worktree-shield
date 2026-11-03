@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from worktree_shield.collectors.runtime import ProcessDeniedError, ProcessGoneError, Socket
 from worktree_shield.runner import CommandResult, Outcome
 
 
@@ -61,3 +62,28 @@ FIXTURES = Path(__file__).parent / "fixtures"
 def read_fixture(*parts: str) -> str:
     """Text of a file under tests/fixtures/ (see the README next to each set)."""
     return FIXTURES.joinpath(*parts).read_text(encoding="utf-8")
+
+
+@dataclass
+class FakeProcessTable:
+    """Sockets and processes as a test describes them; nothing is read from the system.
+
+    ``sockets`` are (protocol, address, port, pid); ``processes`` map a pid to
+    (name, working directory) or to "gone" / "denied".
+    """
+
+    sockets: list[tuple[str, str, int, int | None]]
+    processes: dict[int, tuple[str, str | None] | str] = field(default_factory=dict)
+    limitation: str | None = None
+
+    def listening_sockets(self) -> tuple[list[Socket], str | None]:
+        return [Socket(*s) for s in self.sockets], self.limitation
+
+    def process(self, pid: int) -> tuple[str, str | None]:
+        found = self.processes[pid]
+        if found == "gone":
+            raise ProcessGoneError
+        if found == "denied":
+            raise ProcessDeniedError
+        assert isinstance(found, tuple)
+        return found

@@ -2,38 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import pytest
 
+from tests.fakes import FakeProcessTable as FakeTable
 from worktree_shield.models import Observation, ResourceKind
-
-
-@dataclass
-class FakeTable:
-    """Sockets and processes as a test describes them; nothing is read from the system."""
-
-    sockets: list[tuple[str, str, int, int | None]]
-    processes: dict[int, tuple[str, str | None] | str] = field(default_factory=dict)
-    limitation: str | None = None
-
-    def listening_sockets(self) -> tuple[list[Any], str | None]:
-        from worktree_shield.collectors.runtime import Socket
-
-        return [Socket(*s) for s in self.sockets], self.limitation
-
-    def process(self, pid: int) -> tuple[str, str | None]:
-        from worktree_shield.collectors.runtime import ProcessDeniedError, ProcessGoneError
-
-        found = self.processes[pid]
-        if found == "gone":
-            raise ProcessGoneError
-        if found == "denied":
-            raise ProcessDeniedError
-        assert isinstance(found, tuple)
-        return found
 
 
 def _observe(table: FakeTable, worktrees: list[str]) -> Any:

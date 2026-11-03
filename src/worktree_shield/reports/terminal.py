@@ -292,6 +292,24 @@ def _render_gaps(snapshot: Snapshot, label: Callable[[str], str], console: Conso
             console.print(
                 Text(f"  {label(value.source.worktree)}  {where} {value.name}: {value.reason}")
             )
+    runtime = snapshot.runtime
+    if runtime is not None and runtime.unattributed:
+        console.print()
+        console.print(Text("Configured ports in use outside the worktrees", style="bold"))
+        for listener in runtime.unattributed:
+            owner = listener.process or "a process"
+            if listener.pid is not None:
+                owner += f" (pid {listener.pid})"
+            address = f"[{listener.address}]" if ":" in listener.address else listener.address
+            console.print(
+                Text(f"  {listener.protocol} {address}:{listener.port}  {owner}: {listener.note}")
+            )
+    if runtime is not None:
+        for limitation in runtime.limitations:
+            console.print(Text(f"Running processes: {limitation}.", style="dim"))
+    elif snapshot.policy is not None:
+        console.print()
+        console.print(Text("Running processes were not looked at.", style="dim"))
     if snapshot.policy is not None and not snapshot.policy.include_env_files:
         console.print()
         console.print(
