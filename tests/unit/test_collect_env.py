@@ -155,7 +155,7 @@ def test_details_say_what_was_read(tmp_path: Path) -> None:
     details = {c.key: c.detail for c in _collect(tmp_path).claims}
     assert details == {
         "tcp://127.0.0.1:3000": "PORT=3000 (HOST=127.0.0.1)",
-        "db://postgres/localhost:5432/app": "DATABASE_URL points to db://postgres/localhost:5432/app",
+        "db://postgres/localhost:5432/app": "DATABASE_URL",
         "path:///var/log/app": "LOG_DIR=/var/log/app",
     }
 

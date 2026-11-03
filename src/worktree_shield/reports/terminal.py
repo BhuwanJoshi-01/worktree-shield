@@ -7,13 +7,23 @@ Rich markup, so a branch called ``[bold]x`` is printed as it is.
 from __future__ import annotations
 
 import os
+from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
-from worktree_shield.models import Policy, Repository, Snapshot, Worktree
+from worktree_shield.models import (
+    Policy,
+    Repository,
+    ResourceClaim,
+    ResourceKind,
+    Snapshot,
+    SourceRef,
+    Worktree,
+)
 
 _REDACTION_NAMES = {
     "home_path": ("home path", "home paths"),
@@ -189,3 +199,109 @@ def render_policy(policy: Policy, worktree: str | None, console: Console) -> Non
             style="dim",
         )
     )
+
+
+_KIND_TITLES = (
+    (ResourceKind.LISTEN_PORT, "Listen ports"),
+    (ResourceKind.DATABASE, "Databases"),
+    (ResourceKind.COMPOSE_PROJECT, "Compose projects"),
+    (ResourceKind.CONTAINER_NAME, "Container names"),
+    (ResourceKind.VOLUME, "Volumes"),
+    (ResourceKind.ABSOLUTE_PATH, "Absolute paths"),
+    (ResourceKind.CLIENT_ENDPOINT, "Servers the worktrees connect to"),
+)
+
+
+def _where(source: SourceRef) -> str:
+    line = f":{source.line}" if source.line is not None else ""
+    return display_path(source.path) + line
+
+
+def render_resources(snapshot: Snapshot, console: Console) -> None:
+    """Every resource the worktrees declare, grouped by kind; shared ones marked."""
+    repository = snapshot.repository
+    console.print(Text(f"worktree-shield {snapshot.tool_version}", style="bold"))
+    if repository is None:
+        console.print(Text("The worktrees could not be listed:"))
+        for failure in snapshot.probe_failures:
+            console.print(Text(f"  {failure.probe}: {failure.detail}"))
+        return
+    paths = [w.path for w in repository.worktrees]
+    parent = common_parent(paths)
+
+    def name(worktree: str) -> str:
+        return display_path(os.path.relpath(worktree, parent) if parent is not None else worktree)
+
+    by_key: dict[tuple[ResourceKind, str], list[ResourceClaim]] = defaultdict(list)
+    for claim in snapshot.claims:
+        by_key[(claim.kind, claim.key)].append(claim)
+    shared = sum(1 for claims in by_key.values() if len({c.worktree for c in claims}) > 1)
+    count = len(repository.worktrees)
+    console.print(
+        Text(
+            f"{count} worktree{'s' if count != 1 else ''}, {len(by_key)} "
+            f"resource{'s' if len(by_key) != 1 else ''}, {shared} used by more than one worktree"
+        )
+    )
+    if parent is not None:
+        console.print(Text(f"Worktrees are named relative to {display_path(parent)}", style="dim"))
+    for kind, title in _KIND_TITLES:
+        keys = sorted(key for key in by_key if key[0] is kind)
+        if not keys:
+            continue
+        console.print()
+        console.print(Text(title, style="bold"))
+        table = Table(box=None, show_edge=False, pad_edge=False, show_header=False)
+        table.add_column("Resource", no_wrap=True)
+        table.add_column("Worktree", overflow="fold")
+        table.add_column("Where", overflow="fold")
+        table.add_column("What", overflow="fold")
+        for key in keys:
+            claims = by_key[key]
+            users = len({c.worktree for c in claims})
+            label = Text(key[1])
+            if users > 1:
+                label.append(f"  {users} worktrees", style="bold yellow")
+            for index, claim in enumerate(claims):
+                table.add_row(
+                    label if index == 0 else Text(""),
+                    Text(name(claim.worktree)),
+                    Text(_where(claim.source)),
+                    Text(claim.detail),
+                )
+        console.print(table)
+    if not by_key:
+        console.print()
+        console.print(Text("No ports, databases or paths were found in the configuration."))
+    _render_gaps(snapshot, name, console)
+
+
+def _render_gaps(snapshot: Snapshot, label: Callable[[str], str], console: Console) -> None:
+    """What could not be read: skipped files, unreadable values, files left out."""
+    if snapshot.skipped:
+        console.print()
+        console.print(Text("Not read", style="bold"))
+        for skipped in snapshot.skipped:
+            where = _where(skipped.source)
+            console.print(Text(f"  {label(skipped.source.worktree)}  {where} {skipped.reason}"))
+    if snapshot.unreadable:
+        console.print()
+        console.print(Text("Could not be identified", style="bold"))
+        for value in snapshot.unreadable:
+            where = _where(value.source)
+            console.print(
+                Text(f"  {label(value.source.worktree)}  {where} {value.name}: {value.reason}")
+            )
+    if snapshot.policy is not None and not snapshot.policy.include_env_files:
+        console.print()
+        console.print(
+            Text(
+                ".env and .env.local were not read; --include-env reads them (only ports, "
+                "database servers and paths are kept from them).",
+                style="dim",
+            )
+        )
+    line = redaction_line(snapshot)
+    if line:
+        console.print()
+        console.print(Text(line, style="dim"))

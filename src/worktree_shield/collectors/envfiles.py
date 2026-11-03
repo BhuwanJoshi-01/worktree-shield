@@ -70,7 +70,7 @@ def _collect(
         if target is not None:
             if target.engine == "sqlite" and not is_absolute_path(target.database or ""):
                 continue  # relative to each worktree, so never shared
-            detail = f"{entry.key} points to {target.key}"
+            detail = entry.key  # the key already names the database
             out.claims.append(
                 ResourceClaim(ResourceKind.DATABASE, target.key, scope.worktree, source, detail)
             )
