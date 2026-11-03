@@ -6,6 +6,9 @@ written.
 
 ## v0.1: passive audit of existing worktrees
 
+All twelve are implemented and tested on real temporary repositories (see the tests named after each ID). The
+release waits for testers on other machines; macOS has not been tried yet.
+
 | ID | Feature | Done when |
 | --- | --- | --- |
 | WTS-001 | Git worktree discovery | `git worktree list --porcelain -z` is parsed correctly, including locked, detached, prunable worktrees and odd file names |
