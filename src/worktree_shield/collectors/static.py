@@ -7,6 +7,7 @@ from worktree_shield.collectors.compose import collect_compose
 from worktree_shield.collectors.envfiles import collect_env_files
 from worktree_shield.collectors.layout import config_directories
 from worktree_shield.collectors.node import collect_package_json
+from worktree_shield.collectors.procfile import collect_devcontainer, collect_procfiles
 from worktree_shield.collectors.python import collect_pyproject
 from worktree_shield.collectors.vite import collect_vite_config
 from worktree_shield.models import Policy
@@ -20,3 +21,5 @@ def collect_worktree(scope: Scope, policy: Policy, out: Collected) -> None:
         collect_vite_config(scope, directory, out)
         collect_pyproject(scope, directory, out)
         collect_compose(scope, directory, policy, out)
+        collect_procfiles(scope, directory, out)
+        collect_devcontainer(scope, directory, out)

@@ -67,3 +67,5 @@ for shared ports, databases, Docker Compose names and absolute paths.
   SARIF and fails with `strict`.
 - Documentation: architecture, privacy, troubleshooting, a command reference,
   sample reports of the example repository, and a project site.
+- Ports from `Procfile`/`Procfile.dev` and dev containers (`appPort`,
+  `forwardPorts`).

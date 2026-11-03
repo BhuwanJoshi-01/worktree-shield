@@ -50,13 +50,14 @@ src/worktree_shield/
                   ports in script command lines; clients skipped; fragment only), jstext.py
                   (JS with comments/strings/regexes blanked, positions kept), interpolate.py
                   (Compose ${VAR:-x}; unset = assumed, needed without default = missing),
-                  compose.py (ports/volumes syntax)
+                  compose.py (ports/volumes syntax), jsonc.py (comments and trailing
+                  commas out, lines kept)
   collectors/     base.py (Scope: root + worktree name + cap, read() records SkippedFile;
                   Collected; tcp_key/path_key), envfiles.py, node.py (package.json),
                   vite.py, python.py (poe/taskipy/pdm/hatch/rye), compose.py (compose-go file
                   choice + project-name precedence; SafeLoader only, pure Python), runtime.py
                   (ProcessTable protocol, PsutilTable; cwd inside a worktree = attribution; never
-                  cmdline/environ), layout.py (which
+                  cmdline/environ), procfile.py (Procfile + dev containers), layout.py (which
                   directories: 3 deep, never into another .git, skip list), static.py
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)

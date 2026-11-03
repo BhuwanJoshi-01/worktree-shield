@@ -8,7 +8,7 @@ flowchart LR
   CLI[cli.py] --> O[orchestrator]
   O --> G[git discovery<br/>rev-parse, worktree list -z]
   O --> P[policy<br/>.worktree-shield.toml]
-  O --> S[static collectors<br/>.env, package.json, vite, pyproject, Compose]
+  O --> S[static collectors<br/>.env, package.json, vite, pyproject,<br/>Compose, Procfile, dev containers]
   O --> R[runtime<br/>listening sockets, process cwd]
   G & P & S & R --> SN[Snapshot<br/>facts only]
   SN --> C[collision graph<br/>overlap, certainty]

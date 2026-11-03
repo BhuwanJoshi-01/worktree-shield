@@ -1,0 +1,12 @@
+// A dev container of a web app; comments and trailing commas as VS Code allows them.
+{
+  "name": "web",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  /* Ports the editor forwards to this machine. */
+  "forwardPorts": [
+    3000,
+    "db:5432", // the database service of the Compose file
+  ],
+  "appPort": ["8080:80", 9229],
+  "postCreateCommand": "npm ci // not a comment inside a string",
+}

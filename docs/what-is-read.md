@@ -30,6 +30,8 @@ Bare and prunable worktrees have no files and are left out.
 | `vite.config.{js,ts,mjs,mts,cjs,cts}` | `server.port`, `preview.port` (with `host` and `strictPort`), absolute `cacheDir` and `build.outDir`, when they are literal values. |
 | `pyproject.toml` | Listen ports in the tasks of poe, taskipy, pdm, hatch and rye, including a task's `env`. |
 | `compose.yaml` and the other Compose file names, plus the override file | Project name, `container_name`, published host ports, absolute bind mounts and named volumes. See below. |
+| `Procfile`, `Procfile.dev` | Listen ports in each process command (foreman, honcho, Heroku, Rails `bin/dev`). |
+| `.devcontainer/devcontainer.json`, `.devcontainer.json` | `appPort` (published on the host) and `forwardPorts` (forwarded to localhost; the editor moves them to another port when taken, so they never fail `--strict` alone). Comments and trailing commas are allowed. |
 
 From `.env` files a value is kept only as one of these, and every other value is dropped right after parsing:
 
