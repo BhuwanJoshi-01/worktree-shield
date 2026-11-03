@@ -109,3 +109,13 @@ def _observe(
     claims += found
     relevant = tuple(u for u in unattributed if (u.protocol, u.port) in configured)
     return RuntimeFacts(relevant, tuple(limitations))
+
+
+def diagnose(snapshot: Snapshot) -> Snapshot:
+    """The snapshot with the findings of every built-in rule added."""
+    from worktree_shield.rules.catalog import builtin_rules
+    from worktree_shield.rules.engine import evaluate
+
+    if snapshot.repository is None:
+        return snapshot
+    return replace(snapshot, findings=evaluate(snapshot, builtin_rules()))
