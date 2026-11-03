@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 
 def _collect(root: Path) -> Any:
     from worktree_shield.collectors.base import Collected, Scope
@@ -60,6 +58,8 @@ def test_every_config_file_name(tmp_path: Path, name: str) -> None:
         "// server: { port: 3000 }",
         "const s = 'server: { port: 3000 }'",
         "export default { build: { outDir: 'dist' } }",
+        "export default { build: { sourcemap: true } }",
+        "export default { build: { outDir: '/srv/' + name } }",
         "export default { server: { port: 3000 ",  # never closed
     ],
 )
