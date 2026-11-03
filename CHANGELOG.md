@@ -62,3 +62,6 @@ for shared ports, databases, Docker Compose names and absolute paths.
   port, a database and Compose project name of its own, overrides in `.env`
   for values from templates), never applied. `worktree-shield explain RULE`
   and `worktree-shield rules`. See docs/cli.md.
+- A GitHub Action (`uses: BhuwanJoshi-01/worktree-shield@…`): checks the refs in
+  `compare-with` out next to the branch as worktrees, scans statically, writes
+  SARIF and fails with `strict`.

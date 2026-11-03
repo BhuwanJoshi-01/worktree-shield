@@ -42,6 +42,66 @@ jobs:
       - run: uv sync --locked
       - run: uv run pytest -q --cov --cov-report=term
 
+  package:
+    # The wheel a user installs must work on its own: build it, install it into an empty
+    # environment (no repository, no dev tools) and run the installed command on the
+    # example repository.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: Build the sdist and wheel
+        run: uv build
+      - name: The wheel carries the rule documentation for explain
+        run: |
+          wheel=$(ls dist/*.whl)
+          python -m zipfile -l "$wheel" | grep -q "worktree_shield/rules/rules.md" || { echo "::error::rules.md missing from $wheel"; exit 1; }
+      - name: Install the wheel into a fresh environment
+        run: |
+          uv venv "$RUNNER_TEMP/fresh" --python 3.12
+          uv pip install --python "$RUNNER_TEMP/fresh" dist/*.whl
+      - name: Run the installed command
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then bin="$RUNNER_TEMP/fresh/Scripts"; else bin="$RUNNER_TEMP/fresh/bin"; fi
+          "$bin/worktree-shield" --version
+          "$bin/wtshield" --help > /dev/null
+          "$bin/worktree-shield" explain WTS-PORT-001 > /dev/null
+          "$bin/python" examples/conflicting-worktrees/build.py "$RUNNER_TEMP/demo"
+          set +e
+          "$bin/worktree-shield" scan --repo "$RUNNER_TEMP/demo/app" --scope static --strict --format json > report.json
+          status=$?
+          set -e
+          [ "$status" -eq 1 ] || { echo "::error::scan --strict exited $status, expected 1"; exit 1; }
+          "$bin/python" -c "import json; d = json.load(open('report.json')); assert d['schema_version'] == 1 and d['summary']['strict_failure']"
+
+  audit:
+    # Known vulnerabilities in the runtime dependencies (not the dev tools).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - name: pip-audit
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt > requirements.txt
+          uvx pip-audit --strict --requirement requirements.txt
+
+  dependency-review:
+    # Flags vulnerable or license-incompatible dependencies a pull request adds.
+    # GitHub offers it on public repositories; skipped while this one is private.
+    if: github.event_name == 'pull_request' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: moderate
   sarif:
     # The SARIF report of the example repository is validated against the official
     # schema, fetched from the OASIS repository at a pinned commit and checksummed.

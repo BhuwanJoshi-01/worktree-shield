@@ -1,0 +1,58 @@
+name: Action
+
+# Runs this repository's action on the example repository, as a user's workflow would.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the example repository
+        run: python3 examples/conflicting-worktrees/build.py "$RUNNER_TEMP/demo"
+
+      - name: Strict scan of the colliding worktrees
+        id: strict
+        continue-on-error: true
+        uses: ./
+        with:
+          working-directory: ${{ runner.temp }}/demo/app
+          sarif: ${{ runner.temp }}/strict.sarif
+
+      - name: The strict scan failed and still wrote its report
+        env:
+          OUTCOME: ${{ steps.strict.outcome }}
+          REPORT: ${{ steps.strict.outputs.sarif }}
+        run: |
+          [ "$OUTCOME" = failure ] || { echo "::error::expected the strict scan to fail, got $OUTCOME"; exit 1; }
+          python3 -c "import json, sys; r = json.load(open(sys.argv[1]))['runs'][0]['results']; assert {x['ruleId'] for x in r} >= {'WTS-PORT-001', 'WTS-DB-001'}" "$REPORT"
+
+  compare-with:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: A repository with a branch that hardcodes the same port as main
+        run: |
+          git config --global user.name CI && git config --global user.email ci@example.invalid
+          repo="$RUNNER_TEMP/two-branches"
+          git init -q -b main "$repo" && cd "$repo"
+          printf 'PORT=5173\n' > .env.example && git add -A && git commit -q -m main
+          git switch -q -c feature && printf 'PORT=5173\nAPI_PORT=8000\n' > .env.example && git commit -qam feature
+
+      - name: Compare the feature branch with main
+        uses: ./
+        with:
+          working-directory: ${{ runner.temp }}/two-branches
+          compare-with: main
+          strict: "false"
+          sarif: ${{ runner.temp }}/compare.sarif
+
+      - name: Port 5173 is reported between the two
+        run: |
+          python3 -c "import json, sys; r = json.load(open(sys.argv[1]))['runs'][0]['results']; assert any('5173' in x['message']['text'] for x in r), r" "$RUNNER_TEMP/compare.sarif"

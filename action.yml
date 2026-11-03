@@ -1,0 +1,66 @@
+name: worktree-shield
+description: Find the ports, databases and Docker resources that this branch would share with other branches checked out as worktrees.
+author: BhuwanJoshi-01
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  compare-with:
+    description: >-
+      Branches or other refs to check out next to this one as extra worktrees before the
+      scan, separated by spaces (for example "main"). Empty: scan only the worktrees that
+      already exist.
+    default: ""
+  strict:
+    description: Fail the step when a finding fails under the repository's policy.
+    default: "true"
+  sarif:
+    description: Where to write the SARIF report (for github/codeql-action/upload-sarif).
+    default: worktree-shield.sarif
+  working-directory:
+    description: A directory inside the repository to scan.
+    default: "."
+
+outputs:
+  sarif:
+    description: The path of the SARIF report.
+    value: ${{ steps.scan.outputs.sarif }}
+
+runs:
+  using: composite
+  steps:
+    - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+
+    - name: Check out the refs to compare with
+      if: inputs.compare-with != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        REFS: ${{ inputs.compare-with }}
+        TARGET: ${{ runner.temp }}/worktree-shield
+      run: |
+        # The only writes, and they are the action's, in the runner's clone: worktree-shield
+        # itself reads only.
+        for ref in $REFS; do
+          name=$(printf '%s' "$ref" | tr -c 'A-Za-z0-9._-' '-')
+          if ! git rev-parse --verify --quiet "$ref^{commit}" > /dev/null; then
+            git fetch --quiet --no-tags --depth=1 origin "$ref"
+            ref=FETCH_HEAD
+          fi
+          git worktree add --quiet --detach "$TARGET/$name" "$ref"
+        done
+
+    - name: Scan
+      id: scan
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        STRICT: ${{ inputs.strict }}
+        SARIF: ${{ inputs.sarif }}
+      run: |
+        # Installed from this action's own checkout, so the version matches the tag in uses:.
+        args=(report --repo . --scope static --format sarif --output "$SARIF" --force)
+        [ "$STRICT" = "true" ] && args+=(--strict)
+        echo "sarif=$(cd "$(dirname "$SARIF")" && pwd)/$(basename "$SARIF")" >> "$GITHUB_OUTPUT"
+        uvx --quiet --from "$GITHUB_ACTION_PATH" worktree-shield "${args[@]}"
