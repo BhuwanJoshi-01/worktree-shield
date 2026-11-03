@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-008")
-
 
 def _overlap(kind: str, a: str, b: str) -> str:
     from worktree_shield.models import ResourceKind
@@ -32,6 +30,11 @@ def _overlap(kind: str, a: str, b: str) -> str:
         ("tcp://*:8000", "tcp://*:8001", "none"),
         ("tcp://*:8000", "udp://*:8000", "none"),
         ("udp://*:53", "udp://0.0.0.0:53", "same"),
+        ("tcp://0.0.0.0:80", "tcp://dev.local:80", "possible"),
+        ("tcp://localhost:80", "tcp://10.0.0.5:80", "none"),
+        ("tcp://localhost:80", "tcp://dev.local:80", "possible"),
+        ("odd", "odd", "same"),
+        ("odd", "tcp://*:80", "none"),
     ],
 )
 def test_listen_ports(a: str, b: str, expected: str) -> None:
@@ -54,6 +57,10 @@ def test_listen_ports(a: str, b: str, expected: str) -> None:
         ("db://redis/localhost:6379/0", "db://redis/localhost:6379/1", "none"),
         ("db://sqlite//srv/app.db", "db://sqlite//srv/./app.db", "same"),
         ("db://postgres/unix:/run/pg:5432/app", "db://postgres/local:5432/app", "possible"),
+        ("db://postgres/unix:/run/a:5432/app", "db://postgres/unix:/run/b:5432/app", "none"),
+        ("db://mongodb/a:1,b:2/blog", "db://mongodb/a:1,b:2/blog", "same"),
+        ("db://mongodb/cluster.example/blog", "db://mongodb/cluster.example/blog", "same"),
+        ("not-a-db-key", "not-a-db-key", "same"),
     ],
 )
 def test_databases(a: str, b: str, expected: str) -> None:
