@@ -191,12 +191,14 @@ class RedactionCount:
 class Snapshot:
     """Everything one scan observed and concluded; the input of every renderer.
 
-    Worktree, claim and runtime facts join this record as their collectors are added.
+    ``repository`` is ``None`` when discovery failed (see ``probe_failures``). Claim and
+    runtime facts join this record as their collectors are added.
     """
 
     tool_version: str
     created_at: str
     schema_version: int = SCHEMA_VERSION
+    repository: Repository | None = None
     probe_failures: tuple[ProbeFailure, ...] = ()
     findings: tuple[Finding, ...] = ()
     redactions: tuple[RedactionCount, ...] = ()
