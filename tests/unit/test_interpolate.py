@@ -8,8 +8,6 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-005")
-
 
 def _run(text: str, **variables: str) -> Any:
     from worktree_shield.parsers.interpolate import interpolate
@@ -43,13 +41,14 @@ def _run(text: str, **variables: str) -> Any:
         ("${A:-}", {}, ("", (), ("A",))),
         ("cost: 5$", {}, ("cost: 5$", (), ())),
         ("${PROJECT}-db", {"PROJECT": "shop"}, ("shop-db", (), ())),
+        ("$A-${A}", {}, (None, ("A",), ())),
     ],
 )
 def test_interpolation(text: str, variables: dict[str, str], expected: Any) -> None:
     assert _run(text, **variables) == expected
 
 
-@pytest.mark.parametrize("text", ["${A", "${}", "${A B}", "${1A}", "${A:x}"])
+@pytest.mark.parametrize("text", ["${A", "${}", "${A B}", "${1A}", "${A:x}", "${A:-never closed"])
 def test_invalid_syntax_has_no_value(text: str) -> None:
     value, missing, _ = _run(text)
     assert value is None
@@ -65,3 +64,13 @@ def test_any_text_is_handled(text: str, variables: dict[str, str]) -> None:
 
     result = interpolate(text, variables)
     assert result.value is None or isinstance(result.value, str)
+
+
+def test_a_default_that_is_not_used_needs_nothing() -> None:
+    assert _run("${A:-${B}}", A="set") == ("set", (), ())
+    assert _run("${A:+${B}}") == ("", (), ("A",))
+
+
+def test_absurd_nesting_is_invalid_not_a_crash() -> None:
+    text = "${A:-" * 500 + "x" + "}" * 500
+    assert _run(text) == (None, (), ())
