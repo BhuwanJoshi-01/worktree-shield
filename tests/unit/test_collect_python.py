@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 
 def _collect(root: Path) -> Any:
     from worktree_shield.collectors.base import Collected, Scope
@@ -67,3 +65,12 @@ def test_deeply_nested_sequences_are_cut_off(tmp_path: Path) -> None:
         nested = f"{{ sequence = [{nested}] }}" if nested != "x" else '"vite --port 1"'
     (tmp_path / "pyproject.toml").write_text(f"[tool.poe.tasks]\ndeep = {nested}\n")
     assert _collect(tmp_path).claims == []  # beyond the depth limit, not a crash
+
+
+def test_a_task_written_as_a_dotted_key_has_no_line(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_text('[tool]\npoe.tasks.serve = "vite --port 1"\n')
+    assert [(c.key, c.source.line) for c in _collect(tmp_path).claims] == [("tcp://*:1", None)]
+
+
+def test_no_pyproject(tmp_path: Path) -> None:
+    assert _collect(tmp_path).claims == []
