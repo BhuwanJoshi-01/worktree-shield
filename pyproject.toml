@@ -3,6 +3,8 @@ name = "worktree-shield"
 version = "0.1.0"
 description = "Audit parallel Git worktrees for shared ports, databases and Docker resources before your agents collide."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "BhuwanJoshi-01", email = "bhuwanj779@gmail.com" }
 ]
