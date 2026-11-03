@@ -51,3 +51,10 @@ for shared ports, databases, Docker Compose names and absolute paths.
   confirmed (a running server in another worktree), probable or possible; the
   status follows the policy level, and `--strict` exits 1 when a finding
   fails. A possible collision never fails. See docs/rules.md.
+- Reports: `scan --format json|markdown|sarif` on stdout, and `report -f
+  markdown|json|sarif -o FILE [--force] [--strict]`, the only thing the tool
+  writes. JSON follows docs/json-schema-v1.json (schema version 1) with a
+  `summary` for preflights; SARIF 2.1.0 is validated against the OASIS schema in
+  CI. See docs/json-output.md.
+- `examples/conflicting-worktrees/build.py`: three worktrees sharing a port, a
+  database and a Compose project, and `--fixed` for the same repository without.

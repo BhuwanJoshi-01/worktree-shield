@@ -26,7 +26,8 @@ worktree-shield scan --scope static  # configuration only; leave running process
 worktree-shield plan                 # suggested changes, printed only, never applied
 worktree-shield policy               # the policy in .worktree-shield.toml, checked, or the defaults
 worktree-shield resources            # every port, database, Compose name and path each worktree declares
-worktree-shield report --format sarif --output conflicts.sarif
+worktree-shield report --format sarif --output conflicts.sarif   # also markdown, json
+worktree-shield scan --strict --format json                      # for agents and scripts
 ```
 
 ## What it promises

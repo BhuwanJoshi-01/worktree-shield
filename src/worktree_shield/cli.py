@@ -19,10 +19,13 @@ from worktree_shield import __version__
 from worktree_shield.config import PolicyError, policy_of
 from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
-from worktree_shield.models import Status
+from worktree_shield.models import Snapshot, Status
 from worktree_shield.orchestrator import diagnose, inspect_resources, inspect_worktrees
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
 from worktree_shield.reports.findings import render_scan
+from worktree_shield.reports.json_report import render_json
+from worktree_shield.reports.markdown import render_markdown
+from worktree_shield.reports.sarif import render_sarif
 from worktree_shield.reports.terminal import render_policy, render_resources, render_worktrees
 from worktree_shield.runner import SubprocessRunner
 
@@ -78,34 +81,29 @@ _ENV_OPTION = typer.Option(
 )
 
 
-@app.command()
-def scan(
-    repo: Annotated[Path, _REPO_OPTION] = Path(),
-    strict: Annotated[
-        bool,
-        typer.Option("--strict", help="Exit with 1 when a finding fails under the policy."),
-    ] = False,
-    scope: Annotated[
-        Scope,
-        typer.Option(
-            "--scope",
-            help="all: configuration and running processes; static: configuration only; "
-            "runtime: only what running processes show.",
-        ),
-    ] = Scope.ALL,
-    include_env: Annotated[bool, _ENV_OPTION] = False,
-    show_all: Annotated[
-        bool, typer.Option("--all", help="Also list the checks that passed or did not apply.")
-    ] = False,
-) -> None:
-    """Find ports, databases, Compose names and paths the worktrees share.
+class Format(StrEnum):
+    TERMINAL = "terminal"
+    JSON = "json"
+    MARKDOWN = "markdown"
+    SARIF = "sarif"
 
-    Reads configuration as data and, unless --scope static, looks at listening
-    processes; nothing is run, changed or locked. Exit codes: 0 when the scan ran, 1
-    with --strict when a finding fails under the policy, 2 for errors, 3 outside a Git
-    repository.
-    """
-    redactor = Redactor(RedactionContext.current())
+
+class ReportFormat(StrEnum):
+    MARKDOWN = "markdown"
+    JSON = "json"
+    SARIF = "sarif"
+
+
+_STRICT_OPTION = typer.Option("--strict", help="Exit with 1 when a finding fails under the policy.")
+_SCOPE_OPTION = typer.Option(
+    "--scope",
+    help="all: configuration and running processes; static: configuration only; "
+    "runtime: only what running processes show.",
+)
+
+
+def _diagnosed(repo: Path, scope: Scope, include_env: bool) -> Snapshot:
+    """Scan and diagnose, or exit with 3 (not a repository) or 2 (unusable policy)."""
     try:
         snapshot = inspect_resources(
             SubprocessRunner(),
@@ -117,17 +115,94 @@ def scan(
         typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)
         raise typer.Exit(ExitCode.CONTEXT_UNAVAILABLE) from None
     except PolicyError as error:
-        typer.echo(f"worktree-shield: {redactor.text(str(error))}", err=True)
+        message = Redactor(RedactionContext.current()).text(str(error))
+        typer.echo(f"worktree-shield: {message}", err=True)
         raise typer.Exit(ExitCode.ERROR) from None
     diagnosed = diagnose(snapshot)
     if scope is Scope.RUNTIME:
         kept = tuple(f for f in diagnosed.findings if f.id in _RUNTIME_RULES)
         diagnosed = dataclasses.replace(diagnosed, findings=kept)
-    render_scan(redact_snapshot(diagnosed), Console(highlight=False), show_all=show_all)
+    return diagnosed
+
+
+def _rendered(snapshot: Snapshot, output_format: str) -> str:
+    if output_format == Format.JSON:
+        return render_json(snapshot)
+    if output_format == Format.SARIF:
+        return render_sarif(snapshot)
+    return render_markdown(snapshot)
+
+
+def _finish(diagnosed: Snapshot, strict: bool) -> None:
     if diagnosed.repository is None:
         raise typer.Exit(ExitCode.ERROR)
     if strict and any(f.status is Status.FAIL for f in diagnosed.findings):
         raise typer.Exit(ExitCode.STRICT_FAILURE)
+
+
+@app.command()
+def scan(
+    repo: Annotated[Path, _REPO_OPTION] = Path(),
+    strict: Annotated[bool, _STRICT_OPTION] = False,
+    scope: Annotated[Scope, _SCOPE_OPTION] = Scope.ALL,
+    include_env: Annotated[bool, _ENV_OPTION] = False,
+    output_format: Annotated[
+        Format, typer.Option("--format", help="terminal, or json/markdown/sarif on stdout.")
+    ] = Format.TERMINAL,
+    show_all: Annotated[
+        bool, typer.Option("--all", help="Also list the checks that passed or did not apply.")
+    ] = False,
+) -> None:
+    """Find ports, databases, Compose names and paths the worktrees share.
+
+    Reads configuration as data and, unless --scope static, looks at listening
+    processes; nothing is run, changed or locked. Exit codes: 0 when the scan ran, 1
+    with --strict when a finding fails under the policy, 2 for errors, 3 outside a Git
+    repository.
+    """
+    diagnosed = _diagnosed(repo, scope, include_env)
+    redacted = redact_snapshot(diagnosed)
+    if output_format is Format.TERMINAL:
+        render_scan(redacted, Console(highlight=False), show_all=show_all)
+    else:
+        sys.stdout.write(_rendered(redacted, output_format))
+    _finish(diagnosed, strict)
+
+
+@app.command()
+def report(
+    repo: Annotated[Path, _REPO_OPTION] = Path(),
+    output_format: Annotated[
+        ReportFormat, typer.Option("--format", "-f", help="markdown, json or sarif.")
+    ] = ReportFormat.MARKDOWN,
+    output: Annotated[
+        Path | None,
+        typer.Option("--output", "-o", metavar="FILE", help="Write to FILE (default: stdout)."),
+    ] = None,
+    force: Annotated[bool, typer.Option("--force", help="Overwrite FILE if it exists.")] = False,
+    strict: Annotated[bool, _STRICT_OPTION] = False,
+    scope: Annotated[Scope, _SCOPE_OPTION] = Scope.ALL,
+    include_env: Annotated[bool, _ENV_OPTION] = False,
+) -> None:
+    """Write the scan as a shareable report: Markdown for an issue or PR, JSON for
+    scripts, SARIF for code scanning.
+
+    The report is redacted (home paths, user names, secrets). The file named with
+    --output is the only thing worktree-shield ever writes.
+    """
+    to_file = output is not None and str(output) != "-"
+    if to_file and output is not None and output.exists() and not force:
+        typer.echo(f"worktree-shield: {output} exists; use --force to overwrite it.", err=True)
+        raise typer.Exit(ExitCode.ERROR)
+    diagnosed = _diagnosed(repo, scope, include_env)
+    redacted = redact_snapshot(diagnosed)
+    rendered = _rendered(redacted, output_format)
+    if to_file and output is not None:
+        output.write_text(rendered, encoding="utf-8")
+        typer.echo(f"Wrote {output}. Read it before you share it.", err=True)
+    else:
+        sys.stdout.write(rendered)
+    _finish(diagnosed, strict)
 
 
 @app.command()
