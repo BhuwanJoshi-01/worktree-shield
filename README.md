@@ -2,8 +2,8 @@
 
 **Audit parallel Git worktrees for shared ports, databases and Docker resources before your agents collide.**
 
-> **Status: in development.** Nothing is released yet. The commands below are the planned interface for 0.1.0;
-> see the [roadmap](docs/roadmap.md).
+> **Status: before 0.1.0.** The commands below work from a checkout (`uv run worktree-shield …`); nothing is on
+> PyPI yet. See the [roadmap](docs/roadmap.md).
 
 Git worktrees give every agent or task its own checkout, but not its own infrastructure. Three worktrees can still
 start a dev server on the same port, migrate the same `app_dev` database, reuse one Docker Compose project name or
@@ -31,6 +31,39 @@ worktree-shield report --format sarif --output conflicts.sarif   # also markdown
 worktree-shield scan --strict --format json                      # for agents and scripts
 ```
 
+Try it on a repository built to collide:
+
+```bash
+python examples/conflicting-worktrees/build.py /tmp/wts-demo
+worktree-shield scan --repo /tmp/wts-demo/app --scope static
+```
+
+## In CI
+
+A CI checkout is a single worktree, so the GitHub Action checks this branch out next to another ref, as a second
+worktree, and reports what the two would share:
+
+```yaml
+jobs:
+  worktree-shield:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # for upload-sarif
+    steps:
+      - uses: actions/checkout@v7
+      - uses: BhuwanJoshi-01/worktree-shield@v0.1.0
+        with:
+          compare-with: main     # refs to check out next to this branch
+          strict: "true"         # fail when a finding fails under .worktree-shield.toml
+      - uses: github/codeql-action/upload-sarif@v4
+        if: always()             # upload the report even when the scan failed the job
+        with:
+          sarif_file: worktree-shield.sarif
+```
+
+The scan in CI is static: running processes on a runner say nothing about your machine.
+
 ## What it promises
 
 - **Read-only.** It never writes to your worktrees or `.git`, never prunes, kills, starts containers or touches
@@ -51,6 +84,14 @@ Worktree managers can avoid collisions when they create the worktrees:
 [worktree-compose](https://github.com/mostafasudo/worktree-compose) checks port collisions between the worktrees it
 manages with `wtc doctor`. Worktree Shield doesn't create anything; it audits whatever is already there, with a
 policy file, CI exit codes and SARIF.
+
+## Documentation
+
+- [Command reference](docs/cli.md) and exit codes
+- [Rules](docs/rules.md): every finding ID, what decides its status, how to fix it
+- [Policy file](docs/policy.md): `.worktree-shield.toml`
+- [What is read](docs/what-is-read.md), and what never is
+- [JSON, SARIF and Markdown output](docs/json-output.md)
 
 ## License
 

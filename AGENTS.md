@@ -89,7 +89,10 @@ docs/rules.md     every WTS rule, how status follows from policy level and certa
 docs/json-output.md   JSON summary fields, SARIF mapping, Markdown; json-schema-v1.json
 examples/         conflicting-worktrees/build.py: three colliding worktrees (--fixed: none)
 scripts/          check_sarif.py (CI validates SARIF against the pinned OASIS schema)
-.github/          CI, issue forms, PR template
+action.yml        the GitHub Action (composite): compare-with refs as worktrees in the runner's
+                  clone, then report --scope static -f sarif; inputs reach scripts via env only
+.github/          CI (lint, tests 3.11-3.14 + Windows, package: wheel in an empty venv, audit,
+                  sarif), action.yml self-test, release.yml (trusted publishing), issue forms
 ```
 
 The core (runner, privacy, models, CLI shell) follows gpu-stack-inspector and screenshare-doctor; each project
