@@ -56,7 +56,8 @@ def path_key(value: str) -> str:
     return "path://" + value.rstrip("/\\")
 
 
-def tcp_key(host: str | None, port: int, default: str = "*") -> str:
+def port_key(host: str | None, port: int, default: str = "*", protocol: str = "tcp") -> str:
     """``tcp://127.0.0.1:5173``; ``default`` stands for a host the config leaves open."""
     server = host or default
-    return f"tcp://[{server}]:{port}" if ":" in server else f"tcp://{server}:{port}"
+    shown = f"[{server}]" if ":" in server else server
+    return f"{protocol}://{shown}:{port}"

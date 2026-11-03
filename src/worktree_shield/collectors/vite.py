@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from pathlib import PurePosixPath
 
-from worktree_shield.collectors.base import Collected, Scope, is_absolute_path, path_key, tcp_key
+from worktree_shield.collectors.base import Collected, Scope, is_absolute_path, path_key, port_key
 from worktree_shield.models import ResourceClaim, ResourceKind
 from worktree_shield.names import literal_host, port_number
 from worktree_shield.parsers.jstext import blank_code
@@ -82,7 +82,7 @@ def _claims(scope: Scope, relative: PurePosixPath, text: str) -> list[ResourceCl
         ports.append(
             ResourceClaim(
                 ResourceKind.LISTEN_PORT,
-                tcp_key(host, port),
+                port_key(host, port),
                 scope.worktree,
                 source,
                 f"{kind}.port: {port}",

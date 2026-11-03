@@ -232,3 +232,28 @@ def test_discovery_failure_returns_the_snapshot_without_claims(
     )
     snapshot = inspect_resources(SubprocessRunner(), tmp_path)
     assert (snapshot.repository, snapshot.policy, snapshot.claims) == (None, None, ())
+
+
+def test_compose_projects_named_in_the_file_are_shared(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    main = make_repo(tmp_path, "shop")
+    (main / "compose.yaml").write_text(
+        "name: shop\nservices:\n  db:\n    image: postgres\n    container_name: shop-db\n"
+        "    ports: ['5432:5432']\n    volumes: ['pgdata:/var/lib/postgresql/data']\n"
+        "volumes:\n  pgdata: {}\n",
+        encoding="utf-8",
+    )
+    git(main, "add", "-A")
+    git(main, "commit", "-q", "-m", "compose")
+    add_worktree(main, tmp_path / "shop-login", "login")
+    assert _run(monkeypatch, "resources", "--repo", str(main)) == 0
+    out = _out(capsys)
+    for shared in (
+        "compose-project://shop 2 worktrees",
+        "container://shop-db 2 worktrees",
+        "tcp://*:5432 2 worktrees",
+        "volume://shop_pgdata 2 worktrees",
+    ):
+        assert shared in out
+    assert "Compose projects" in out
