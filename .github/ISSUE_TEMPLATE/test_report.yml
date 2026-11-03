@@ -1,0 +1,45 @@
+name: Test report
+description: Tell us how it did on your repository (it helps a lot, even when everything works)
+labels: ["needs: hardware-test"]
+body:
+  - type: markdown
+    attributes:
+      value: Don't paste repository names you can't share, paths with your user name, or credentials.
+  - type: textarea
+    id: stack
+    attributes:
+      label: Project stack
+      description: Languages, dev servers, databases, Docker Compose, and how many worktrees run at once.
+      placeholder: Vite + FastAPI + PostgreSQL in Compose, 3 worktrees used by 2 coding agents
+    validations:
+      required: true
+  - type: input
+    id: created
+    attributes:
+      label: How the worktrees were created
+      placeholder: git worktree add / workz / wtc / Claude Code / Codex / …
+    validations:
+      required: true
+  - type: textarea
+    id: incidents
+    attributes:
+      label: Real collisions you have seen
+      description: What clashed (port, database, container, folder) and what happened.
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What gave the right answer?
+      options:
+        - label: scan (static)
+        - label: scan --scope runtime
+        - label: plan
+        - label: report (redacted, safe to share)
+        - label: --strict in CI
+  - type: textarea
+    id: notes
+    attributes:
+      label: False alarms, misses, confusing output
+  - type: input
+    id: system
+    attributes:
+      label: Operating system and Git version
