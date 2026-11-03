@@ -1,0 +1,608 @@
+{
+  "tool_version": "0.1.0",
+  "created_at": "2026-11-04T12:00:00Z",
+  "schema_version": 1,
+  "repository": {
+    "common_dir": "~/app/.git",
+    "current": "~/app",
+    "bare": false,
+    "worktrees": [
+      {
+        "path": "~/app",
+        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "branch": "refs/heads/main",
+        "bare": false,
+        "detached": false,
+        "locked": null,
+        "prunable": null
+      },
+      {
+        "path": "~/app-billing",
+        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "branch": "refs/heads/billing",
+        "bare": false,
+        "detached": false,
+        "locked": null,
+        "prunable": null
+      },
+      {
+        "path": "~/app-login",
+        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "branch": "refs/heads/login",
+        "bare": false,
+        "detached": false,
+        "locked": null,
+        "prunable": null
+      }
+    ]
+  },
+  "policy": {
+    "include_runtime": false,
+    "include_env_files": false,
+    "max_file_bytes": 262144,
+    "shared_host_ports": "deny",
+    "shared_database": "warn",
+    "shared_compose_projects": "warn",
+    "fixed_container_names": "warn",
+    "shared_absolute_paths": "warn",
+    "allow_ports": [],
+    "allow_paths": [],
+    "source": null
+  },
+  "claims": [
+    {
+      "kind": "listen_port",
+      "key": "tcp://*:5173",
+      "worktree": "~/app",
+      "source": {
+        "worktree": "~/app",
+        "path": ".env.example",
+        "line": 1
+      },
+      "detail": "PORT=5173",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "database",
+      "key": "db://postgres/localhost:5432/app_dev",
+      "worktree": "~/app",
+      "source": {
+        "worktree": "~/app",
+        "path": ".env.example",
+        "line": 2
+      },
+      "detail": "DATABASE_URL",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "compose_project",
+      "key": "compose-project://app",
+      "worktree": "~/app",
+      "source": {
+        "worktree": "~/app",
+        "path": "compose.yaml",
+        "line": 1
+      },
+      "detail": "name: app",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "volume",
+      "key": "volume://app_pgdata",
+      "worktree": "~/app",
+      "source": {
+        "worktree": "~/app",
+        "path": "compose.yaml",
+        "line": 6
+      },
+      "detail": "services.db.volumes: pgdata",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "listen_port",
+      "key": "tcp://*:5173",
+      "worktree": "~/app-billing",
+      "source": {
+        "worktree": "~/app-billing",
+        "path": ".env.example",
+        "line": 1
+      },
+      "detail": "PORT=5173",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "database",
+      "key": "db://postgres/localhost:5432/app_dev",
+      "worktree": "~/app-billing",
+      "source": {
+        "worktree": "~/app-billing",
+        "path": ".env.example",
+        "line": 2
+      },
+      "detail": "DATABASE_URL",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "compose_project",
+      "key": "compose-project://app",
+      "worktree": "~/app-billing",
+      "source": {
+        "worktree": "~/app-billing",
+        "path": "compose.yaml",
+        "line": 1
+      },
+      "detail": "name: app",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "volume",
+      "key": "volume://app_pgdata",
+      "worktree": "~/app-billing",
+      "source": {
+        "worktree": "~/app-billing",
+        "path": "compose.yaml",
+        "line": 6
+      },
+      "detail": "services.db.volumes: pgdata",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "listen_port",
+      "key": "tcp://*:5173",
+      "worktree": "~/app-login",
+      "source": {
+        "worktree": "~/app-login",
+        "path": ".env.example",
+        "line": 1
+      },
+      "detail": "PORT=5173",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "database",
+      "key": "db://postgres/localhost:5432/app_dev",
+      "worktree": "~/app-login",
+      "source": {
+        "worktree": "~/app-login",
+        "path": ".env.example",
+        "line": 2
+      },
+      "detail": "DATABASE_URL",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "compose_project",
+      "key": "compose-project://app",
+      "worktree": "~/app-login",
+      "source": {
+        "worktree": "~/app-login",
+        "path": "compose.yaml",
+        "line": 1
+      },
+      "detail": "name: app",
+      "observation": "static",
+      "strict": null
+    },
+    {
+      "kind": "volume",
+      "key": "volume://app_pgdata",
+      "worktree": "~/app-login",
+      "source": {
+        "worktree": "~/app-login",
+        "path": "compose.yaml",
+        "line": 6
+      },
+      "detail": "services.db.volumes: pgdata",
+      "observation": "static",
+      "strict": null
+    }
+  ],
+  "skipped": [],
+  "unreadable": [],
+  "runtime": null,
+  "probe_failures": [],
+  "findings": [
+    {
+      "id": "WTS-PORT-001",
+      "status": "fail",
+      "severity": "high",
+      "confidence": "medium",
+      "summary": "Port 5173 is configured in 3 worktrees",
+      "reason": "3 worktrees start a server on port 5173; only one can listen on it at a time.",
+      "resource_key": "tcp://*:5173",
+      "certainty": "probable",
+      "worktrees": [
+        "~/app",
+        "~/app-billing",
+        "~/app-login"
+      ],
+      "sources": [
+        {
+          "worktree": "~/app",
+          "path": ".env.example",
+          "line": 1
+        },
+        {
+          "worktree": "~/app-billing",
+          "path": ".env.example",
+          "line": 1
+        },
+        {
+          "worktree": "~/app-login",
+          "path": ".env.example",
+          "line": 1
+        }
+      ],
+      "evidence": [
+        {
+          "source": ".env.example:1",
+          "key": "~/app",
+          "value": "PORT=5173"
+        },
+        {
+          "source": ".env.example:1",
+          "key": "~/app-billing",
+          "value": "PORT=5173"
+        },
+        {
+          "source": ".env.example:1",
+          "key": "~/app-login",
+          "value": "PORT=5173"
+        }
+      ],
+      "recommended_action": "Give each worktree its own port, for example in its own .env (PORT=5173 in one, PORT=5174 in the other), or run one server at a time.",
+      "verify_command": "worktree-shield scan --strict",
+      "limitations": [
+        "The servers collide only when both run at the same time on this host."
+      ],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-PORT-002",
+      "status": "not_tested",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "Running processes were not looked at",
+      "reason": "The scan ran without the runtime observation (--no-runtime or include_runtime = false).",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-DB-001",
+      "status": "warn",
+      "severity": "high",
+      "confidence": "medium",
+      "summary": "The Postgres database app_dev on localhost:5432 is used by 3 worktrees",
+      "reason": "3 worktrees use the same database; migrations, seed data and tests of one change the data of the other.",
+      "resource_key": "db://postgres/localhost:5432/app_dev",
+      "certainty": "probable",
+      "worktrees": [
+        "~/app",
+        "~/app-billing",
+        "~/app-login"
+      ],
+      "sources": [
+        {
+          "worktree": "~/app",
+          "path": ".env.example",
+          "line": 2
+        },
+        {
+          "worktree": "~/app-billing",
+          "path": ".env.example",
+          "line": 2
+        },
+        {
+          "worktree": "~/app-login",
+          "path": ".env.example",
+          "line": 2
+        }
+      ],
+      "evidence": [
+        {
+          "source": ".env.example:2",
+          "key": "~/app",
+          "value": "DATABASE_URL"
+        },
+        {
+          "source": ".env.example:2",
+          "key": "~/app-billing",
+          "value": "DATABASE_URL"
+        },
+        {
+          "source": ".env.example:2",
+          "key": "~/app-login",
+          "value": "DATABASE_URL"
+        }
+      ],
+      "recommended_action": "Give each worktree its own database name in its .env (app_dev_login, app_dev_billing), or allow the server's port in [allow] ports if sharing it is intended.",
+      "verify_command": "worktree-shield scan --strict",
+      "limitations": [
+        "Sharing is harmless when the worktrees only read from the database."
+      ],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-DB-002",
+      "status": "pass",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "Every database URL could be identified",
+      "reason": "No database URL was refused.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-DOCKER-001",
+      "status": "warn",
+      "severity": "medium",
+      "confidence": "medium",
+      "summary": "The Compose project app is used by 3 worktrees",
+      "reason": "3 worktrees have the Compose project name app; docker compose up in one takes over the containers, networks and volumes of the other.",
+      "resource_key": "compose-project://app",
+      "certainty": "probable",
+      "worktrees": [
+        "~/app",
+        "~/app-billing",
+        "~/app-login"
+      ],
+      "sources": [
+        {
+          "worktree": "~/app",
+          "path": "compose.yaml",
+          "line": 1
+        },
+        {
+          "worktree": "~/app-billing",
+          "path": "compose.yaml",
+          "line": 1
+        },
+        {
+          "worktree": "~/app-login",
+          "path": "compose.yaml",
+          "line": 1
+        }
+      ],
+      "evidence": [
+        {
+          "source": "compose.yaml:1",
+          "key": "~/app",
+          "value": "name: app"
+        },
+        {
+          "source": "compose.yaml:1",
+          "key": "~/app-billing",
+          "value": "name: app"
+        },
+        {
+          "source": "compose.yaml:1",
+          "key": "~/app-login",
+          "value": "name: app"
+        }
+      ],
+      "recommended_action": "Set COMPOSE_PROJECT_NAME in each worktree's .env, or remove name: from the compose file so each worktree's directory name is used.",
+      "verify_command": "worktree-shield scan --strict",
+      "limitations": [
+        "The stacks collide only when they run on the same Docker daemon."
+      ],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-DOCKER-002",
+      "status": "not_applicable",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "No Compose service sets a container name",
+      "reason": "Nothing of this kind was found in the configuration.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-DOCKER-003",
+      "status": "warn",
+      "severity": "medium",
+      "confidence": "medium",
+      "summary": "The Docker volume app_pgdata is mounted in 3 worktrees",
+      "reason": "3 worktrees mount the Docker volume app_pgdata, so they read and write the same data.",
+      "resource_key": "volume://app_pgdata",
+      "certainty": "probable",
+      "worktrees": [
+        "~/app",
+        "~/app-billing",
+        "~/app-login"
+      ],
+      "sources": [
+        {
+          "worktree": "~/app",
+          "path": "compose.yaml",
+          "line": 6
+        },
+        {
+          "worktree": "~/app-billing",
+          "path": "compose.yaml",
+          "line": 6
+        },
+        {
+          "worktree": "~/app-login",
+          "path": "compose.yaml",
+          "line": 6
+        }
+      ],
+      "evidence": [
+        {
+          "source": "compose.yaml:6",
+          "key": "~/app",
+          "value": "services.db.volumes: pgdata"
+        },
+        {
+          "source": "compose.yaml:6",
+          "key": "~/app-billing",
+          "value": "services.db.volumes: pgdata"
+        },
+        {
+          "source": "compose.yaml:6",
+          "key": "~/app-login",
+          "value": "services.db.volumes: pgdata"
+        }
+      ],
+      "recommended_action": "Let Compose prefix the volume with the project name (drop its name: or external:), or mark it external on purpose if the data is meant to be shared.",
+      "verify_command": "worktree-shield scan --strict",
+      "limitations": [
+        "The data is shared only on the same Docker daemon."
+      ],
+      "caused_by": "WTS-DOCKER-001"
+    },
+    {
+      "id": "WTS-PATH-001",
+      "status": "not_applicable",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "No worktree configures an absolute path",
+      "reason": "Nothing of this kind was found in the configuration.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-ENV-001",
+      "status": "not_applicable",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "No .env files were found",
+      "reason": "No worktree has a .env or .env.local.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-CONFIG-001",
+      "status": "pass",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "Every configuration file found was read",
+      "reason": "No file was refused and every value could be identified.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-GIT-002",
+      "status": "pass",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "Every listed worktree exists",
+      "reason": "No worktree is prunable.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-RUNTIME-001",
+      "status": "not_tested",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "Running processes were not looked at",
+      "reason": "The scan ran without the runtime observation (--no-runtime or include_runtime = false).",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    },
+    {
+      "id": "WTS-POLICY-001",
+      "status": "not_applicable",
+      "severity": "info",
+      "confidence": "medium",
+      "summary": "The policy allows nothing explicitly",
+      "reason": "There are no [allow] entries to check.",
+      "resource_key": null,
+      "certainty": null,
+      "worktrees": [],
+      "sources": [],
+      "evidence": [],
+      "recommended_action": null,
+      "verify_command": null,
+      "limitations": [],
+      "caused_by": null
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "home_path",
+      "count": 65
+    }
+  ],
+  "summary": {
+    "worktrees": 3,
+    "counts": {
+      "pass": 3,
+      "warn": 3,
+      "fail": 1,
+      "unknown": 0,
+      "not_applicable": 4,
+      "not_tested": 2
+    },
+    "worst": "fail",
+    "strict_failure": true
+  }
+}

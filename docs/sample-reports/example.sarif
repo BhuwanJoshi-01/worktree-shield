@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "worktree-shield",
+          "version": "0.1.0",
+          "semanticVersion": "0.1.0",
+          "informationUri": "https://github.com/BhuwanJoshi-01/worktree-shield",
+          "rules": [
+            {
+              "id": "WTS-PORT-001",
+              "name": "WTSPORT001",
+              "shortDescription": {
+                "text": "A listen port configured in more than one worktree"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-port-001-a-listen-port-configured-in-more-than-one-worktree"
+            },
+            {
+              "id": "WTS-PORT-002",
+              "name": "WTSPORT002",
+              "shortDescription": {
+                "text": "A configured port already held by a running process"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-port-002-a-configured-port-already-held-by-a-running-process"
+            },
+            {
+              "id": "WTS-DB-001",
+              "name": "WTSDB001",
+              "shortDescription": {
+                "text": "A database used by more than one worktree"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-db-001-a-database-used-by-more-than-one-worktree"
+            },
+            {
+              "id": "WTS-DB-002",
+              "name": "WTSDB002",
+              "shortDescription": {
+                "text": "A database URL that could not be identified safely"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-db-002-a-database-url-that-could-not-be-identified-safely"
+            },
+            {
+              "id": "WTS-DOCKER-001",
+              "name": "WTSDOCKER001",
+              "shortDescription": {
+                "text": "A Compose project name shared by worktrees"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-docker-001-a-compose-project-name-shared-by-worktrees"
+            },
+            {
+              "id": "WTS-DOCKER-002",
+              "name": "WTSDOCKER002",
+              "shortDescription": {
+                "text": "A fixed container name set in more than one worktree"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-docker-002-a-fixed-container-name-set-in-more-than-one-worktree"
+            },
+            {
+              "id": "WTS-DOCKER-003",
+              "name": "WTSDOCKER003",
+              "shortDescription": {
+                "text": "A Docker volume mounted in more than one worktree"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-docker-003-a-docker-volume-mounted-in-more-than-one-worktree"
+            },
+            {
+              "id": "WTS-PATH-001",
+              "name": "WTSPATH001",
+              "shortDescription": {
+                "text": "An absolute path more than one worktree writes to"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-path-001-an-absolute-path-more-than-one-worktree-writes-to"
+            },
+            {
+              "id": "WTS-ENV-001",
+              "name": "WTSENV001",
+              "shortDescription": {
+                "text": ".env files the scan did not read"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-env-001-env-files-the-scan-did-not-read"
+            },
+            {
+              "id": "WTS-CONFIG-001",
+              "name": "WTSCONFIG001",
+              "shortDescription": {
+                "text": "Configuration that could not be read"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-config-001-configuration-that-could-not-be-read"
+            },
+            {
+              "id": "WTS-GIT-002",
+              "name": "WTSGIT002",
+              "shortDescription": {
+                "text": "A worktree Git lists whose directory is gone"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-git-002-a-worktree-git-lists-whose-directory-is-gone"
+            },
+            {
+              "id": "WTS-RUNTIME-001",
+              "name": "WTSRUNTIME001",
+              "shortDescription": {
+                "text": "Running processes that could not be tied to a worktree"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-runtime-001-running-processes-that-could-not-be-tied-to-a-worktree"
+            },
+            {
+              "id": "WTS-POLICY-001",
+              "name": "WTSPOLICY001",
+              "shortDescription": {
+                "text": "An [allow] entry the configuration contradicts"
+              },
+              "helpUri": "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md#wts-policy-001-an-allow-entry-the-configuration-contradicts"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "WTS-PORT-001",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Port 5173 is configured in 3 worktrees. 3 worktrees start a server on port 5173; only one can listen on it at a time. Next: Give each worktree its own port, for example in its own .env (PORT=5173 in one, PORT=5174 in the other), or run one server at a time."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "worktreeShield/v1": "069d888d5febabf8c31a94244896c06050dcd393969f4bf43a1ebbe57f7f7a42"
+          },
+          "properties": {
+            "certainty": "probable",
+            "worktrees": [
+              "~/app",
+              "~/app-billing",
+              "~/app-login"
+            ]
+          },
+          "relatedLocations": [
+            {
+              "id": 0,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-billing"
+              }
+            },
+            {
+              "id": 1,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-login"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "WTS-DB-001",
+          "ruleIndex": 2,
+          "level": "warning",
+          "message": {
+            "text": "The Postgres database app_dev on localhost:5432 is used by 3 worktrees. 3 worktrees use the same database; migrations, seed data and tests of one change the data of the other. Next: Give each worktree its own database name in its .env (app_dev_login, app_dev_billing), or allow the server's port in [allow] ports if sharing it is intended."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "worktreeShield/v1": "ee4b5b5db8bf3c022715ffa8ffdd482d604f977d966a7d8aea4de9d464afb94f"
+          },
+          "properties": {
+            "certainty": "probable",
+            "worktrees": [
+              "~/app",
+              "~/app-billing",
+              "~/app-login"
+            ]
+          },
+          "relatedLocations": [
+            {
+              "id": 0,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-billing"
+              }
+            },
+            {
+              "id": 1,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".env.example"
+                },
+                "region": {
+                  "startLine": 2
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-login"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "WTS-DOCKER-001",
+          "ruleIndex": 4,
+          "level": "warning",
+          "message": {
+            "text": "The Compose project app is used by 3 worktrees. 3 worktrees have the Compose project name app; docker compose up in one takes over the containers, networks and volumes of the other. Next: Set COMPOSE_PROJECT_NAME in each worktree's .env, or remove name: from the compose file so each worktree's directory name is used."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "worktreeShield/v1": "455ba8d6da2764e67946d575719875e2e71cd3d2695cb9cf86ab097d4c353b00"
+          },
+          "properties": {
+            "certainty": "probable",
+            "worktrees": [
+              "~/app",
+              "~/app-billing",
+              "~/app-login"
+            ]
+          },
+          "relatedLocations": [
+            {
+              "id": 0,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-billing"
+              }
+            },
+            {
+              "id": 1,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-login"
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "WTS-DOCKER-003",
+          "ruleIndex": 6,
+          "level": "warning",
+          "message": {
+            "text": "The Docker volume app_pgdata is mounted in 3 worktrees. 3 worktrees mount the Docker volume app_pgdata, so they read and write the same data. Next: Let Compose prefix the volume with the project name (drop its name: or external:), or mark it external on purpose if the data is meant to be shared."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "worktreeShield/v1": "a7762a55065058793927d1675dcd6b5d226718b4f24466a38b4a69c6f7266c2e"
+          },
+          "properties": {
+            "certainty": "probable",
+            "worktrees": [
+              "~/app",
+              "~/app-billing",
+              "~/app-login"
+            ]
+          },
+          "relatedLocations": [
+            {
+              "id": 0,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-billing"
+              }
+            },
+            {
+              "id": 1,
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "compose.yaml"
+                },
+                "region": {
+                  "startLine": 6
+                }
+              },
+              "message": {
+                "text": "in the worktree ~/app-login"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
