@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy, PolicyLevel
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-002")
-
 
 def _parse(text: str, source: str = ".worktree-shield.toml") -> Policy:
     from worktree_shield.config import parse_policy
@@ -122,3 +120,82 @@ def test_flags_override_the_file() -> None:
     overridden = apply_overrides(policy, include_runtime=False, include_env_files=True)
     assert (overridden.include_runtime, overridden.include_env_files) == (False, True)
     assert apply_overrides(policy) == policy
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ("schema_version = '1'\n", "schema_version must be the number 1, not '1'"),
+        ("schema_version = 1\nscan = 1\n", "scan must be a section, written [scan]"),
+        ('schema_version = 1\n[allow]\npaths = ["/srv/a\\u001b[31m"]\n', "allow.paths"),
+        ("schema_version = 1\n[policy]\nshared_database = 'DENY'\n", "not 'DENY'"),
+        (f"schema_version = 1\n[policy]\nshared_database = '{'x' * 80}'\n", "not 'xxx"),
+    ],
+)
+def test_more_malformed_policies(text: str, message: str) -> None:
+    from worktree_shield.config import PolicyError
+
+    with pytest.raises(PolicyError, match=re.escape(message)) as caught:
+        _parse(text)
+    assert len(str(caught.value)) < 200  # a long value from the file is shortened
+
+
+def test_allow_lists_are_deduplicated() -> None:
+    policy = _parse(
+        "schema_version = 1\n[allow]\nports = [6379, 5432, 6379]\npaths = ['/a', '/a']\n"
+    )
+    assert (policy.allow_ports, policy.allow_paths) == ((5432, 6379), ("/a",))
+
+
+def test_windows_paths_count_as_absolute() -> None:
+    policy = _parse('schema_version = 1\n[allow]\npaths = ["C:\\\\cache"]\n')
+    assert policy.allow_paths == ("C:\\cache",)
+
+
+def test_a_link_inside_the_worktree_is_followed(tmp_path: Path) -> None:
+    from worktree_shield.config import POLICY_FILE, load_policy
+
+    (tmp_path / "policy.toml").write_text("schema_version = 1\n[scan]\ninclude_runtime = false\n")
+    try:
+        (tmp_path / POLICY_FILE).symlink_to("policy.toml")
+    except OSError:
+        pytest.skip("symbolic links are not available")
+    assert load_policy(tmp_path).include_runtime is False
+
+
+def test_a_dangling_link_cannot_be_read(tmp_path: Path) -> None:
+    from worktree_shield.config import POLICY_FILE, PolicyError, load_policy
+
+    try:
+        (tmp_path / POLICY_FILE).symlink_to("missing.toml")
+    except OSError:
+        pytest.skip("symbolic links are not available")
+    with pytest.raises(PolicyError, match="could not be read"):
+        load_policy(tmp_path)
+
+
+def test_a_directory_is_not_a_policy_file(tmp_path: Path) -> None:
+    from worktree_shield.config import POLICY_FILE, PolicyError, load_policy
+
+    (tmp_path / POLICY_FILE).mkdir()
+    with pytest.raises(PolicyError, match="not a regular file"):
+        load_policy(tmp_path)
+
+
+@pytest.mark.skipif(not hasattr(__import__("os"), "mkfifo"), reason="needs named pipes")
+def test_a_named_pipe_is_not_opened(tmp_path: Path) -> None:
+    import os
+
+    from worktree_shield.config import POLICY_FILE, PolicyError, load_policy
+
+    os.mkfifo(tmp_path / POLICY_FILE)
+    with pytest.raises(PolicyError, match="not a regular file"):
+        load_policy(tmp_path)  # opening it would block until a writer appears
+
+
+def test_a_policy_file_that_is_not_utf8(tmp_path: Path) -> None:
+    from worktree_shield.config import POLICY_FILE, PolicyError, load_policy
+
+    (tmp_path / POLICY_FILE).write_bytes(b"schema_version = 1\n# caf\xe9\n")
+    with pytest.raises(PolicyError, match="not UTF-8"):
+        load_policy(tmp_path)
