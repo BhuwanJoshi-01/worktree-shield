@@ -1,0 +1,42 @@
+name: Feature request
+description: Suggest a config format, a resource kind, a policy option or an integration
+labels: ["type: feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem do you have?
+      description: Describe the collision or risk, not the solution yet.
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: How do you work around it today?
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: How often does this come up?
+      options:
+        - Once
+        - Now and then
+        - Every week or more
+  - type: textarea
+    id: example
+    attributes:
+      label: Example config
+      description: A minimal, credential-free example of the files that declare the resource.
+      render: text
+  - type: textarea
+    id: interface
+    attributes:
+      label: What would you like the tool to report?
+      description: The finding you would expect, and how certain it should be.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Scope and alternatives
+      description: Anything this should deliberately not do (Worktree Shield audits; it does not provision or fix).
