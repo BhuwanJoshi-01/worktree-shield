@@ -21,7 +21,10 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.170.14",
     "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.3",
 ]
 
@@ -52,3 +55,16 @@ python_version = "3.11"
 strict = true
 warn_unreachable = true
 files = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+xfail_strict = true
+
+[tool.coverage.run]
+source = ["worktree_shield"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
