@@ -10,8 +10,6 @@ import pytest
 
 from worktree_shield.models import Observation, ResourceKind
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-007")
-
 
 @dataclass
 class FakeTable:
