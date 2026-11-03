@@ -28,9 +28,16 @@ src/worktree_shield/
                   capped output), probe_failure()
   privacy.py      strip_control(), RedactionContext, Redactor, redact_snapshot()
   exit_codes.py   ExitCode: 0 ok, 1 strict, 2 error, 3 not in a Git repository, 130 interrupted
+  orchestrator.py inspect_worktrees(): runs discovery, builds the Snapshot (facts only)
+  git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
+                  core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
+  reports/        terminal.py (plain Text; display_path() escapes control characters)
 tests/
   conftest.py     autouse no_network guard (UNIX sockets allowed); HYPOTHESIS_PROFILE=thorough
   fakes.py        FakeRunner: scripted commands only, anything else fails the test
+  gitrepos.py     real repositories in tmp dirs (make_repo, add_worktree; global git config off),
+                  tree_digest() to prove a scan wrote nothing, same_path() for Windows paths
+  fixtures/git/   real porcelain captures (binary in .gitattributes: NULs and a newline in a path)
   unit/           unit tests; Git fixtures are real temporary repositories
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 .github/          CI, issue forms, PR template

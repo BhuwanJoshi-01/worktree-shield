@@ -7,13 +7,19 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.console import Console
 
 from worktree_shield import __version__
 from worktree_shield.exit_codes import ExitCode
-from worktree_shield.privacy import RedactionContext, Redactor
+from worktree_shield.git.discovery import NotARepositoryError
+from worktree_shield.orchestrator import inspect_worktrees
+from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
+from worktree_shield.reports.terminal import render_worktrees
+from worktree_shield.runner import SubprocessRunner
 
 HELP = (
     "Audit the worktrees of a Git repository for shared ports, databases and Docker "
@@ -49,6 +55,30 @@ def cli(
     ] = False,
 ) -> None:
     """Global options (the help text comes from HELP)."""
+
+
+@app.command()
+def worktrees(
+    repo: Annotated[
+        Path,
+        typer.Option(
+            "--repo", metavar="PATH", help="A directory inside the repository (default: here)."
+        ),
+    ] = Path(),
+) -> None:
+    """List the worktrees of the repository, as Git records them.
+
+    Runs only git rev-parse and git worktree list, with optional locks off: nothing in
+    .git is written. Exits with code 3 when PATH is not inside a Git repository.
+    """
+    try:
+        snapshot = inspect_worktrees(SubprocessRunner(), repo)
+    except NotARepositoryError:
+        typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)
+        raise typer.Exit(ExitCode.CONTEXT_UNAVAILABLE) from None
+    render_worktrees(redact_snapshot(snapshot), Console(highlight=False))
+    if snapshot.repository is None:
+        raise typer.Exit(ExitCode.ERROR)
 
 
 def main() -> None:

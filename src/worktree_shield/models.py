@@ -146,6 +146,40 @@ def utc_timestamp() -> str:
 
 
 @dataclass(frozen=True, slots=True)
+class Worktree:
+    """One entry of ``git worktree list --porcelain``.
+
+    ``branch`` is the full ref (``refs/heads/feature``) or ``None`` when detached or
+    bare. ``locked`` and ``prunable`` carry Git's reason, ``""`` when it gave none and
+    ``None`` when the flag is not set. A prunable worktree is listed but its directory
+    is gone; it is reported, never pruned.
+    """
+
+    path: str
+    head: str | None = None
+    branch: str | None = None
+    bare: bool = False
+    detached: bool = False
+    locked: str | None = None
+    prunable: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Repository:
+    """The repository the scan started in, and every worktree that shares its ``.git``.
+
+    ``common_dir`` is the shared Git directory, ``current`` the top of the worktree the
+    scan started in (``None`` in a bare repository), ``worktrees`` Git's own list of all
+    worktrees attached to ``common_dir``, nothing found by searching the disk.
+    """
+
+    common_dir: str
+    current: str | None
+    bare: bool
+    worktrees: tuple[Worktree, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
 
@@ -157,12 +191,14 @@ class RedactionCount:
 class Snapshot:
     """Everything one scan observed and concluded; the input of every renderer.
 
-    Worktree, claim and runtime facts join this record as their collectors are added.
+    ``repository`` is ``None`` when discovery failed (see ``probe_failures``). Claim and
+    runtime facts join this record as their collectors are added.
     """
 
     tool_version: str
     created_at: str
     schema_version: int = SCHEMA_VERSION
+    repository: Repository | None = None
     probe_failures: tuple[ProbeFailure, ...] = ()
     findings: tuple[Finding, ...] = ()
     redactions: tuple[RedactionCount, ...] = ()
