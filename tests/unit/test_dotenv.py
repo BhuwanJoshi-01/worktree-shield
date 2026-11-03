@@ -8,8 +8,6 @@ from hypothesis import strategies as st
 
 from tests.fakes import read_fixture
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 
 def _parse(text: str) -> dict[str, tuple[str, int, bool]]:
     from worktree_shield.parsers.dotenv import parse_dotenv
@@ -87,3 +85,13 @@ def test_any_text_parses_without_errors(text: str) -> None:
     for entry in parse_dotenv(text):
         assert 1 <= entry.line <= line_count
         assert entry.key
+
+
+def test_a_quoted_value_spans_at_most_200_lines() -> None:
+    from worktree_shield.parsers.dotenv import MAX_VALUE_LINES
+
+    body = "\n".join("x" for _ in range(MAX_VALUE_LINES + 5))
+    entries = _parse(f'A="{body}"\nB=2\n')
+    assert "A" not in entries  # treated as never closed: a scan stays linear
+    assert entries["B"][0] == "2"
+    assert _parse('A="one\ntwo"\n')["A"] == ("one\ntwo", 1, False)
