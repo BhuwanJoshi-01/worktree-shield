@@ -29,14 +29,22 @@ src/worktree_shield/
                   capped output), probe_failure()
   privacy.py      strip_control(), RedactionContext, Redactor, redact_snapshot()
   exit_codes.py   ExitCode: 0 ok, 1 strict, 2 error, 3 not in a Git repository, 130 interrupted
-  orchestrator.py inspect_worktrees(): runs discovery, builds the Snapshot (facts only)
+  orchestrator.py inspect_worktrees(), inspect_resources(): discovery + policy + static
+                  collectors over every worktree with files; builds the Snapshot (facts only)
   config.py       .worktree-shield.toml: parse_policy() (tomllib, every key checked, unknown = error),
                   load_policy() (regular file inside the worktree, 64 KiB cap), apply_overrides()
   files.py        read_inside(): THE way to read a worktree file (stays inside the worktree, regular
                   files only, O_NONBLOCK + fstat, refused over the cap, never cut); RefusedError
+  names.py        what variable names mean (PORT vs DB_PORT, mutable path or not), literal hosts
   parsers/        pure text parsers: dotenv.py (no expansion; references marked; values not in
                   repr), dburl.py (engine/host/port/database; credentials dropped; uncertain
-                  host = DatabaseURLError, which never repeats the URL)
+                  host = DatabaseURLError, which never repeats the URL), commands.py (listen
+                  ports in script command lines; clients skipped; fragment only), jstext.py
+                  (JS with comments/strings/regexes blanked, positions kept)
+  collectors/     base.py (Scope: root + worktree name + cap, read() records SkippedFile;
+                  Collected; tcp_key/path_key), envfiles.py, node.py (package.json),
+                  vite.py, python.py (poe/taskipy/pdm/hatch/rye), layout.py (which
+                  directories: 3 deep, never into another .git, skip list), static.py
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
   reports/        terminal.py (plain Text; display_path() escapes control characters)
@@ -47,10 +55,11 @@ tests/
                   tree_digest() to prove a scan wrote nothing, same_path() for Windows paths
   fixtures/git/   real porcelain captures (binary in .gitattributes: NULs and a newline in a path)
   fixtures/policy/ hand-written policy files
-  fixtures/env/   hand-written .env files (no real credentials)
+  fixtures/env/   hand-written .env files (no real credentials); vite/, python/: hand-written configs
   unit/           unit tests; Git fixtures are real temporary repositories
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
+docs/what-is-read.md  every file and directory the collectors read, and what they keep
 .github/          CI, issue forms, PR template
 ```
 
@@ -71,6 +80,7 @@ keeps its own copy on purpose.
 - Listen ports and client endpoints are different resource kinds; shared Postgres at 5432 is not a bind collision.
 - Static evidence gives *probable* at most; *confirmed* needs a running process attributed by its working
   directory. When in doubt, `unknown`.
+- Test files with non-ASCII content are written with `encoding="utf-8"`: Windows CI defaults to cp1252.
 - Tests first where possible: `@pytest.mark.xfail(strict=True, reason="WTS-0xx")`, then implement and drop the
   marker.
 

@@ -26,3 +26,12 @@ for shared ports, databases, Docker Compose names and absolute paths.
   paths. Read as TOML data with every key checked; unknown keys are errors.
   `worktree-shield policy [--repo PATH]` shows the effective policy and exits 2
   for a file it cannot use. See docs/policy.md.
+- `worktree-shield resources [--repo PATH] [--include-env]`: the listen ports,
+  databases and absolute paths each worktree declares in `.env.example`/
+  `.env.template`/`.env.sample` (and `.env`/`.env.local` with `--include-env`),
+  `package.json` scripts, `vite.config.*` and the task runners of
+  `pyproject.toml`, with file and line, resources used by several worktrees
+  marked. Database URLs are reduced to engine, host, port and database while
+  parsing; credentials never reach the output. Files are read as data inside
+  the worktree only, with a size cap; nested worktrees and submodules are not
+  counted twice. See docs/what-is-read.md.

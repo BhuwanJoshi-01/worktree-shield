@@ -24,6 +24,7 @@ worktree-shield scan                 # all worktrees of the current repository, 
 worktree-shield scan --strict        # non-zero exit when the policy fails, for CI and agent preflight
 worktree-shield plan                 # suggested changes, printed only, never applied
 worktree-shield policy               # the policy in .worktree-shield.toml, checked, or the defaults
+worktree-shield resources            # every port, database and path each worktree declares
 worktree-shield report --format sarif --output conflicts.sarif
 ```
 
