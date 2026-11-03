@@ -9,7 +9,6 @@ values of every other variable are dropped.
 
 from __future__ import annotations
 
-import ipaddress
 from pathlib import PurePosixPath
 
 from worktree_shield.collectors.base import Collected, Scope, is_absolute_path, path_key
@@ -20,32 +19,18 @@ from worktree_shield.models import (
     SourceRef,
     UnreadableValue,
 )
+from worktree_shield.names import (
+    host_variable,
+    is_mutable_path_variable,
+    literal_host,
+    port_number,
+    port_variable,
+)
 from worktree_shield.parsers.dburl import DatabaseURLError, parse_database_url
 from worktree_shield.parsers.dotenv import EnvEntry, parse_dotenv
 
 TEMPLATE_FILES = (".env.example", ".env.sample", ".env.template")
 LOCAL_FILES = (".env", ".env.local")
-
-
-def _words(text: str) -> frozenset[str]:
-    return frozenset(text.split())
-
-
-# A *_PORT with one of these words names a server the app connects to, not one it runs.
-_CLIENT_WORDS = _words(
-    "DB DATABASE POSTGRES POSTGRESQL PG MYSQL MARIADB REDIS MONGO MONGODB RABBITMQ AMQP SMTP "
-    "MAIL EMAIL ELASTICSEARCH ELASTIC OPENSEARCH KAFKA MEMCACHED MINIO S3 NATS CLICKHOUSE"
-)
-_PATH_WORDS = _words(
-    "DIR DIRECTORY PATH ROOT FOLDER CACHE OUT OUTPUT OUTDIR STORAGE UPLOAD UPLOADS DATA LOG "
-    "LOGS TMP TEMP TMPDIR FILE LOCATION"
-)
-# Read-only by nature: search paths, installations, certificates and configuration.
-_SEARCH_PATHS = _words(
-    "PATH PYTHONPATH NODE_PATH LD_LIBRARY_PATH DYLD_LIBRARY_PATH MANPATH CLASSPATH GOPATH "
-    "PKG_CONFIG_PATH CDPATH"
-)
-_READ_ONLY_WORDS = _words("HOME CERT CERTS KEY CA SSL TLS CONFIG CONF ETC")
 
 
 def collect_env_files(
@@ -84,11 +69,11 @@ def _collect(
                 ResourceClaim(ResourceKind.DATABASE, target.key, scope.worktree, source, detail)
             )
             continue
-        name = entry.key.upper()
-        port = _port(value)
-        if port is not None and (name == "PORT" or name.endswith("_PORT") or name == "PGPORT"):
-            out.claims.append(_port_claim(scope, source, entry, port, by_name))
-        elif _is_mutable_path_name(name) and is_absolute_path(value):
+        port = port_number(value)
+        kind = port_variable(entry.key)
+        if port is not None and kind is not None:
+            out.claims.append(_port_claim(scope, source, entry, kind, port, by_name))
+        elif is_mutable_path_variable(entry.key) and is_absolute_path(value):
             detail = f"{entry.key}={value}"
             out.claims.append(
                 ResourceClaim(
@@ -98,46 +83,21 @@ def _collect(
 
 
 def _port_claim(
-    scope: Scope, source: SourceRef, entry: EnvEntry, port: int, by_name: dict[str, EnvEntry]
+    scope: Scope,
+    source: SourceRef,
+    entry: EnvEntry,
+    kind: ResourceKind,
+    port: int,
+    by_name: dict[str, EnvEntry],
 ) -> ResourceClaim:
-    name = entry.key.upper()
-    prefix = "PG" if name == "PGPORT" else name.removesuffix("PORT")
-    host_entry = by_name.get(f"{prefix}HOST")
-    host = _host(host_entry)
-    client = name == "PGPORT" or bool(_CLIENT_WORDS.intersection(name.split("_")))
-    kind = ResourceKind.CLIENT_ENDPOINT if client else ResourceKind.LISTEN_PORT
+    host_entry = by_name.get(host_variable(entry.key))
+    host = None
+    if host_entry is not None and not host_entry.reference:
+        host = literal_host(host_entry.value)
+    client = kind is ResourceKind.CLIENT_ENDPOINT
     server = host or ("localhost" if client else "*")
     shown = f"[{server}]" if ":" in server else server
     detail = f"{entry.key}={port}"
     if host_entry is not None and host is not None:
         detail += f" ({host_entry.key}={host_entry.value.strip()})"
     return ResourceClaim(kind, f"tcp://{shown}:{port}", scope.worktree, source, detail)
-
-
-def _port(value: str) -> int | None:
-    if not value.isascii() or not value.isdigit() or len(value) > 5:
-        return None
-    port = int(value)
-    return port if 1 <= port <= 65535 else None
-
-
-def _host(entry: EnvEntry | None) -> str | None:
-    """A literal host name or address; ``None`` for references and anything odd."""
-    if entry is None or entry.reference:
-        return None
-    value = entry.value.strip().lower()
-    try:
-        return str(ipaddress.ip_address(value.strip("[]")))
-    except ValueError:
-        pass
-    labels = value.split(".")
-    if value and all(label and label.replace("-", "").isalnum() for label in labels):
-        return value if value.isascii() else None
-    return None
-
-
-def _is_mutable_path_name(name: str) -> bool:
-    if name in _SEARCH_PATHS:
-        return False
-    words = set(name.split("_"))
-    return bool(words & _PATH_WORDS) and not words & _READ_ONLY_WORDS
