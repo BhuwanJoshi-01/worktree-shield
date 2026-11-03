@@ -8,8 +8,6 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 
 def _ports(command: str) -> list[tuple[int, str | None, str, bool | None]]:
     from worktree_shield.parsers.commands import listen_ports
@@ -23,6 +21,7 @@ def _ports(command: str) -> list[tuple[int, str | None, str, bool | None]]:
         ("vite --port 5173", [(5173, None, "--port 5173", False)]),
         ("vite --port=5174 --strictPort", [(5174, None, "--port=5174", True)]),
         ("vite --host 127.0.0.1 --port 5173", [(5173, "127.0.0.1", "--port 5173", False)]),
+        ("vite --host=LocalHost --port 5173", [(5173, "localhost", "--port 5173", False)]),
         ("next dev -p 3001", [(3001, None, "-p 3001", None)]),
         ("serve -l 5000 dist", [(5000, None, "-l 5000", None)]),
         ("PORT=4000 node server.js", [(4000, None, "PORT=4000", None)]),
@@ -65,6 +64,9 @@ def test_listen_ports(command: str, expected: list[Any]) -> None:
         "vite --port ${VITE_PORT:-5173}",
         "vite --port 70000",
         "DB_PORT=5432 node migrate.js",
+        "gunicorn -b unix:/run/app.sock app:app",
+        "gunicorn --bind 'bad host:8000' app:app",
+        "python manage.py runserver",
         "echo 'unbalanced",
         "",
     ],
