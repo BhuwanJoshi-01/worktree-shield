@@ -21,7 +21,8 @@ from and how certain the collision is:
 
 ```bash
 worktree-shield scan                 # all worktrees of the current repository, read-only
-worktree-shield scan --strict        # non-zero exit when the policy fails, for CI and agent preflight
+worktree-shield scan --strict        # exit 1 when a finding fails under the policy, for CI and agent preflight
+worktree-shield scan --scope static  # configuration only; leave running processes alone
 worktree-shield plan                 # suggested changes, printed only, never applied
 worktree-shield policy               # the policy in .worktree-shield.toml, checked, or the defaults
 worktree-shield resources            # every port, database, Compose name and path each worktree declares

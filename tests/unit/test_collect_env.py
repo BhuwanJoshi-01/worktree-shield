@@ -108,8 +108,14 @@ def test_a_relative_sqlite_file_belongs_to_each_worktree(tmp_path: Path) -> None
 def test_local_env_files_need_opt_in(tmp_path: Path) -> None:
     (tmp_path / ".env").write_text("PORT=1111\n")
     (tmp_path / ".env.local").write_text("PORT=2222\n")
-    assert _collect(tmp_path).claims == []
+    left_out = _collect(tmp_path)
+    assert left_out.claims == []
+    assert [(s.source.path, s.reason) for s in left_out.skipped] == [
+        (".env", "was not read: .env files are read only with --include-env"),
+        (".env.local", "was not read: .env files are read only with --include-env"),
+    ]
     opted_in = _collect(tmp_path, Policy(include_env_files=True))
+    assert opted_in.skipped == []
     assert _claims(opted_in) == {
         ("listen_port", "tcp://*:1111", ".env", 1),
         ("listen_port", "tcp://*:2222", ".env.local", 1),

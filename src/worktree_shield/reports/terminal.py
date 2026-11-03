@@ -217,20 +217,31 @@ def _where(source: SourceRef) -> str:
     return display_path(source.path) + line
 
 
+def worktree_names(repository: Repository) -> tuple[Callable[[str], str], str | None]:
+    """How reports name a worktree (relative to the directory all of them share) and
+    that directory, if any."""
+    parent = common_parent([w.path for w in repository.worktrees])
+
+    def name(worktree: str) -> str:
+        return display_path(os.path.relpath(worktree, parent) if parent is not None else worktree)
+
+    return name, parent
+
+
+def render_failed_discovery(snapshot: Snapshot, console: Console) -> None:
+    console.print(Text("The worktrees could not be listed:"))
+    for failure in snapshot.probe_failures:
+        console.print(Text(f"  {failure.probe}: {failure.detail}"))
+
+
 def render_resources(snapshot: Snapshot, console: Console) -> None:
     """Every resource the worktrees declare, grouped by kind; shared ones marked."""
     repository = snapshot.repository
     console.print(Text(f"worktree-shield {snapshot.tool_version}", style="bold"))
     if repository is None:
-        console.print(Text("The worktrees could not be listed:"))
-        for failure in snapshot.probe_failures:
-            console.print(Text(f"  {failure.probe}: {failure.detail}"))
+        render_failed_discovery(snapshot, console)
         return
-    paths = [w.path for w in repository.worktrees]
-    parent = common_parent(paths)
-
-    def name(worktree: str) -> str:
-        return display_path(os.path.relpath(worktree, parent) if parent is not None else worktree)
+    name, parent = worktree_names(repository)
 
     by_key: dict[tuple[ResourceKind, str], list[ResourceClaim]] = defaultdict(list)
     for claim in snapshot.claims:
@@ -310,15 +321,6 @@ def _render_gaps(snapshot: Snapshot, label: Callable[[str], str], console: Conso
     elif snapshot.policy is not None:
         console.print()
         console.print(Text("Running processes were not looked at.", style="dim"))
-    if snapshot.policy is not None and not snapshot.policy.include_env_files:
-        console.print()
-        console.print(
-            Text(
-                ".env and .env.local were not read; --include-env reads them (only ports, "
-                "database servers and paths are kept from them).",
-                style="dim",
-            )
-        )
     line = redaction_line(snapshot)
     if line:
         console.print()

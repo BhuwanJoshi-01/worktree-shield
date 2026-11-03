@@ -5,8 +5,10 @@ No diagnosis logic lives here; commands call collectors, rules and renderers.
 
 from __future__ import annotations
 
+import dataclasses
 import os
 import sys
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -17,8 +19,10 @@ from worktree_shield import __version__
 from worktree_shield.config import PolicyError, policy_of
 from worktree_shield.exit_codes import ExitCode
 from worktree_shield.git.discovery import NotARepositoryError
-from worktree_shield.orchestrator import inspect_resources, inspect_worktrees
+from worktree_shield.models import Status
+from worktree_shield.orchestrator import diagnose, inspect_resources, inspect_worktrees
 from worktree_shield.privacy import RedactionContext, Redactor, redact_snapshot
+from worktree_shield.reports.findings import render_scan
 from worktree_shield.reports.terminal import render_policy, render_resources, render_worktrees
 from worktree_shield.runner import SubprocessRunner
 
@@ -56,6 +60,74 @@ def cli(
     ] = False,
 ) -> None:
     """Global options (the help text comes from HELP)."""
+
+
+class Scope(StrEnum):
+    ALL = "all"
+    STATIC = "static"
+    RUNTIME = "runtime"
+
+
+_RUNTIME_RULES = frozenset({"WTS-PORT-002", "WTS-RUNTIME-001"})
+_REPO_OPTION = typer.Option(
+    "--repo", metavar="PATH", help="A directory inside the repository (default: here)."
+)
+_ENV_OPTION = typer.Option(
+    "--include-env",
+    help="Also read .env and .env.local; only ports, database servers and paths are kept.",
+)
+
+
+@app.command()
+def scan(
+    repo: Annotated[Path, _REPO_OPTION] = Path(),
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="Exit with 1 when a finding fails under the policy."),
+    ] = False,
+    scope: Annotated[
+        Scope,
+        typer.Option(
+            "--scope",
+            help="all: configuration and running processes; static: configuration only; "
+            "runtime: only what running processes show.",
+        ),
+    ] = Scope.ALL,
+    include_env: Annotated[bool, _ENV_OPTION] = False,
+    show_all: Annotated[
+        bool, typer.Option("--all", help="Also list the checks that passed or did not apply.")
+    ] = False,
+) -> None:
+    """Find ports, databases, Compose names and paths the worktrees share.
+
+    Reads configuration as data and, unless --scope static, looks at listening
+    processes; nothing is run, changed or locked. Exit codes: 0 when the scan ran, 1
+    with --strict when a finding fails under the policy, 2 for errors, 3 outside a Git
+    repository.
+    """
+    redactor = Redactor(RedactionContext.current())
+    try:
+        snapshot = inspect_resources(
+            SubprocessRunner(),
+            repo,
+            include_env_files=True if include_env else None,
+            include_runtime=False if scope is Scope.STATIC else None,
+        )
+    except NotARepositoryError:
+        typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)
+        raise typer.Exit(ExitCode.CONTEXT_UNAVAILABLE) from None
+    except PolicyError as error:
+        typer.echo(f"worktree-shield: {redactor.text(str(error))}", err=True)
+        raise typer.Exit(ExitCode.ERROR) from None
+    diagnosed = diagnose(snapshot)
+    if scope is Scope.RUNTIME:
+        kept = tuple(f for f in diagnosed.findings if f.id in _RUNTIME_RULES)
+        diagnosed = dataclasses.replace(diagnosed, findings=kept)
+    render_scan(redact_snapshot(diagnosed), Console(highlight=False), show_all=show_all)
+    if diagnosed.repository is None:
+        raise typer.Exit(ExitCode.ERROR)
+    if strict and any(f.status is Status.FAIL for f in diagnosed.findings):
+        raise typer.Exit(ExitCode.STRICT_FAILURE)
 
 
 @app.command()
