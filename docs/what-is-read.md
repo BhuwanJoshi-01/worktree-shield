@@ -95,6 +95,27 @@ needs a variable no file sets, or that is not valid Compose, is listed under *Co
 override files, a service's last `container_name` counts; ports and volumes of all files are listed together.
 A compose file that cannot be parsed yields nothing and is listed under *Not read*.
 
+## Running processes
+
+Unless `--no-runtime` is given or the policy sets `include_runtime = false`, the scan also looks at the listening
+TCP and bound UDP sockets the system shows. For each process that owns one, it reads the process **name and
+working directory** and nothing else: no command line, no environment, nothing is signalled, and no root or
+administrator rights are needed.
+
+A listener counts for a worktree only when its working directory lies inside that worktree (the innermost one,
+for nested worktrees). A process called `node` or `python` says nothing about which worktree started it, so the
+name is never used. A listener that cannot be tied to a worktree is listed only when its port is one a worktree
+configures, with the reason:
+
+- the owner is a process of another user (Linux lists such sockets without their owner);
+- the process ended while it was looked at;
+- it cannot be inspected without more privileges;
+- its working directory cannot be read;
+- it runs outside every worktree.
+
+On macOS, listing every socket needs root, so only the current user's processes are seen; the output says
+so. The view is a snapshot of one moment: a server started a second later is not in it.
+
 ## What is not read
 
 Not read in this version:

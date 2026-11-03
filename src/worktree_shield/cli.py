@@ -132,18 +132,28 @@ def resources(
             help="Also read .env and .env.local; only ports, database servers and paths are kept.",
         ),
     ] = False,
+    no_runtime: Annotated[
+        bool,
+        typer.Option(
+            "--no-runtime",
+            help="Do not look at running processes (their sockets and working directories).",
+        ),
+    ] = False,
 ) -> None:
     """List the ports, databases, Compose names and paths each worktree declares.
 
     Reads .env templates, package.json, vite.config.*, pyproject.toml and Compose files
-    as data; nothing is run and Docker is not contacted. Resources used by more than one
-    worktree are marked. Exits with 2 for a policy file that cannot be used and 3 outside
-    a Git repository.
+    as data; nothing is run and Docker is not contacted. Listening processes count for
+    the worktree they run in. Resources used by more than one worktree are marked.
+    Exits with 2 for a policy file that cannot be used and 3 outside a Git repository.
     """
     redactor = Redactor(RedactionContext.current())
     try:
         snapshot = inspect_resources(
-            SubprocessRunner(), repo, include_env_files=True if include_env else None
+            SubprocessRunner(),
+            repo,
+            include_env_files=True if include_env else None,
+            include_runtime=False if no_runtime else None,
         )
     except NotARepositoryError:
         typer.echo(f"worktree-shield: {repo} is not inside a Git repository", err=True)

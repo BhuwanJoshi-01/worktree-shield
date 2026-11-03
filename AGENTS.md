@@ -51,14 +51,17 @@ src/worktree_shield/
   collectors/     base.py (Scope: root + worktree name + cap, read() records SkippedFile;
                   Collected; tcp_key/path_key), envfiles.py, node.py (package.json),
                   vite.py, python.py (poe/taskipy/pdm/hatch/rye), compose.py (compose-go file
-                  choice + project-name precedence; SafeLoader only, pure Python), layout.py (which
+                  choice + project-name precedence; SafeLoader only, pure Python), runtime.py
+                  (ProcessTable protocol, PsutilTable; cwd inside a worktree = attribution; never
+                  cmdline/environ), layout.py (which
                   directories: 3 deep, never into another .git, skip list), static.py
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
   reports/        terminal.py (plain Text; display_path() escapes control characters)
 tests/
   conftest.py     autouse no_network guard (UNIX sockets allowed); HYPOTHESIS_PROFILE=thorough
-  fakes.py        FakeRunner: scripted commands only, anything else fails the test
+  fakes.py        FakeRunner: scripted commands only, anything else fails the test;
+                  FakeProcessTable for the runtime observation
   gitrepos.py     real repositories in tmp dirs (make_repo, add_worktree; global git config off),
                   tree_digest() to prove a scan wrote nothing, same_path() for Windows paths
   fixtures/git/   real porcelain captures (binary in .gitattributes: NULs and a newline in a path)
@@ -82,6 +85,8 @@ keeps its own copy on purpose.
   …`. Never `prune`, `kill`, `docker`, `createdb`/`dropdb` or rewrite `.env`.
 - **Drop credentials on parse.** DB URLs become scheme/host/port/database immediately; passwords never reach a
   model, a log or any output (terminal, JSON, Markdown, SARIF).
+- Runtime: a listener belongs to a worktree only through its process's working directory, never its
+  name; read nothing else from a process (no `cmdline`, no `environ`).
 - `.env` and `.env.local` only with explicit opt-in; `.env.example`/`.env.template` are fine.
 - Subprocesses: argument lists only (no `shell=True`), always a timeout and an output cap, always through the
   command runner.

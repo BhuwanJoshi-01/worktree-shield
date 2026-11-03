@@ -257,3 +257,76 @@ def test_compose_projects_named_in_the_file_are_shared(
     ):
         assert shared in out
     assert "Compose projects" in out
+
+
+def test_a_running_server_shows_as_a_runtime_claim(shop: Path) -> None:
+    from tests.fakes import FakeProcessTable
+
+    login = shop.parent / "shop-login"
+    table = FakeProcessTable(
+        [("tcp", "127.0.0.1", 5173, 7), ("tcp", "0.0.0.0", 5173, None), ("tcp", "::", 9999, None)],
+        {7: ("node", str(login / "apps" / "web"))},
+        limitation="the sockets of other users' processes are listed without their owner",
+    )
+    snapshot = inspect_resources(SubprocessRunner(), shop, table=table)
+    runtime = [c for c in snapshot.claims if c.source.path == "pid 7"]
+    assert [(Path(c.worktree).name, c.key) for c in runtime] == [
+        ("shop-login", "tcp://127.0.0.1:5173")
+    ]
+    assert snapshot.runtime is not None
+    # only listeners on ports a worktree configures are kept: 5173, not 9999
+    assert [(u.port, u.note) for u in snapshot.runtime.unattributed] == [
+        (5173, "owned by a process of another user")
+    ]
+    assert snapshot.runtime.limitations == (
+        "the sockets of other users' processes are listed without their owner",
+    )
+    from worktree_shield.collisions import find_collisions
+
+    ports = [c for c in find_collisions(snapshot.claims) if c.key.endswith(":5173")]
+    assert [c.certainty.value for c in ports] == ["confirmed"]
+
+
+def test_runtime_can_be_switched_off(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], shop: Path
+) -> None:
+    assert inspect_resources(SubprocessRunner(), shop, include_runtime=False).runtime is None
+    assert _run(monkeypatch, "resources", "--repo", str(shop), "--no-runtime") == 0
+    assert "Running processes were not looked at." in _out(capsys)
+
+
+def test_a_failing_process_table_is_a_limitation(shop: Path) -> None:
+    class Broken:
+        def listening_sockets(self) -> Any:
+            raise PermissionError(13, "Permission denied")
+
+        def process(self, pid: int) -> Any:  # pragma: no cover - never reached
+            raise AssertionError
+
+    snapshot = inspect_resources(SubprocessRunner(), shop, table=Broken())
+    assert snapshot.runtime is not None
+    assert snapshot.runtime.limitations == (
+        "running processes could not be listed ([Errno 13] Permission denied)",
+    )
+
+
+def test_listeners_outside_the_worktrees_are_shown(shop: Path) -> None:
+    from rich.console import Console
+
+    from tests.fakes import FakeProcessTable
+    from worktree_shield.reports.terminal import render_resources
+
+    table = FakeProcessTable(
+        [("tcp", "::", 5173, 8), ("tcp", "0.0.0.0", 5173, None)],
+        {8: ("code", "/elsewhere")},
+        limitation="only the processes of the current user are visible",
+    )
+    snapshot = inspect_resources(SubprocessRunner(), shop, table=table)
+    console = Console(width=300, color_system=None)
+    with console.capture() as capture:
+        render_resources(snapshot, console)
+    out = " ".join(capture.get().split())
+    assert "Configured ports in use outside the worktrees" in out
+    assert "tcp [::]:5173 code (pid 8): it runs outside every worktree" in out
+    assert "tcp 0.0.0.0:5173 a process: owned by a process of another user" in out
+    assert "Running processes: only the processes of the current user are visible." in out

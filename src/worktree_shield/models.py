@@ -301,6 +301,29 @@ class UnreadableValue:
 
 
 @dataclass(frozen=True, slots=True)
+class Listener:
+    """A listening socket that could not be tied to a worktree, kept when one of the
+    worktrees configures its port. ``note`` says why it is not attributed; ``process``
+    is the process name only, never its command line."""
+
+    protocol: str
+    address: str
+    port: int
+    pid: int | None
+    process: str | None
+    note: str
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeFacts:
+    """What the runtime observation saw beyond the claims it made: listeners on
+    configured ports that belong to no worktree, and what limited the view."""
+
+    unattributed: tuple[Listener, ...] = ()
+    limitations: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
 
@@ -315,7 +338,8 @@ class Snapshot:
     ``repository`` is ``None`` when discovery failed (see ``probe_failures``). ``policy``
     is the effective policy, ``claims`` every resource found in the worktrees,
     ``skipped`` the configuration files that could not be read and ``unreadable`` the
-    values that name a resource without saying safely which one.
+    values that name a resource without saying safely which one. ``runtime`` is
+    ``None`` when running processes were not looked at.
     """
 
     tool_version: str
@@ -326,6 +350,7 @@ class Snapshot:
     claims: tuple[ResourceClaim, ...] = ()
     skipped: tuple[SkippedFile, ...] = ()
     unreadable: tuple[UnreadableValue, ...] = ()
+    runtime: RuntimeFacts | None = None
     probe_failures: tuple[ProbeFailure, ...] = ()
     findings: tuple[Finding, ...] = ()
     redactions: tuple[RedactionCount, ...] = ()
