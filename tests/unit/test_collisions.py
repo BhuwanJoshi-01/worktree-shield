@@ -14,8 +14,6 @@ from worktree_shield.models import (
     SourceRef,
 )
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-008")
-
 LISTEN = ResourceKind.LISTEN_PORT
 
 
