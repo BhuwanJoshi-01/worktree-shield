@@ -6,8 +6,6 @@ from typing import Any
 
 import pytest
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-005")
-
 
 def _ports(entry: Any) -> Any:
     from worktree_shield.parsers.compose import published_ports
@@ -58,6 +56,13 @@ def test_published_ports(entry: Any, expected: Any) -> None:
         [1],
         {"published": "x"},
         "8000:80/http",
+        "[::1:6001:6001",
+        "[::1]6001:6001",
+        "[not an ip]:6001:6001",
+        "bad host:6001:6001",
+        {"published": [8080]},
+        {"published": 8080, "host_ip": 5},
+        {"published": 8080, "host_ip": "bad host"},
     ],
 )
 def test_unreadable_port_entries(entry: Any) -> None:
