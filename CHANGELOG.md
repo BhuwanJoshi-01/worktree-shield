@@ -40,3 +40,7 @@ for shared ports, databases, Docker Compose names and absolute paths.
   mounts and named volumes from `compose.yaml` and its override file, with
   `${VAR:-default}` interpolation from `.env` when env files are read. Parsed
   with PyYAML's safe loader; Docker is never contacted.
+- Running processes in `resources` (`--no-runtime` to skip): listening sockets
+  tied to a worktree by the working directory of their process, and listeners
+  outside the worktrees on ports a worktree configures. Only process names and
+  working directories are read; no root needed.
