@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy, ResourceKind
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 CANARY = "Canary-Pw-91"
 
 
@@ -84,7 +82,9 @@ def test_values_that_are_no_port_number(tmp_path: Path, line: str) -> None:
         "CONFIG_DIR=/etc/app",
         "DATA_DIR=relative/data",
         "DATA_DIR=/",
+        "DATA_DIR=C:\\",
         "PUBLIC_URL=/static",
+        "STORAGE_PATH=s3://bucket/uploads",
         "UPLOAD_DIR=${ROOT}/uploads",
     ],
 )
@@ -158,3 +158,19 @@ def test_details_say_what_was_read(tmp_path: Path) -> None:
         "db://postgres/localhost:5432/app": "DATABASE_URL points to db://postgres/localhost:5432/app",
         "path:///var/log/app": "LOG_DIR=/var/log/app",
     }
+
+
+@pytest.mark.parametrize(
+    ("host", "key"),
+    [
+        ("::1", "tcp://[::1]:3000"),
+        ("[::1]", "tcp://[::1]:3000"),
+        ("Dev-Box.local", "tcp://dev-box.local:3000"),
+        ("not a host", "tcp://*:3000"),
+        ("${BIND}", "tcp://*:3000"),
+        ("bücher.example", "tcp://*:3000"),
+    ],
+)
+def test_only_literal_hosts_narrow_a_port(tmp_path: Path, host: str, key: str) -> None:
+    (tmp_path / ".env.example").write_text(f"HOST={host}\nPORT=3000\n")
+    assert {c.key for c in _collect(tmp_path).claims} == {key}
