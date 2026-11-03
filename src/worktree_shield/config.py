@@ -15,7 +15,7 @@ import tomllib
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
-from worktree_shield.models import Policy, PolicyLevel
+from worktree_shield.models import Policy, PolicyLevel, Repository
 
 POLICY_FILE = ".worktree-shield.toml"
 MAX_POLICY_BYTES = 64 * 1024
@@ -79,6 +79,13 @@ def load_policy(worktree: Path) -> Policy:
     except UnicodeDecodeError:
         raise PolicyError(f"{path} is not UTF-8 text") from None
     return parse_policy(text, str(path))
+
+
+def policy_of(repository: Repository) -> Policy:
+    """The policy of the current worktree; a bare repository has the defaults only."""
+    if repository.current is None:
+        return Policy()
+    return load_policy(Path(repository.current))
 
 
 def apply_overrides(
