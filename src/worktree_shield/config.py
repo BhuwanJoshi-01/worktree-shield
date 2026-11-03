@@ -9,12 +9,11 @@ quietly turn a ``deny`` back into a ``warn``.
 from __future__ import annotations
 
 import dataclasses
-import os
-import stat
 import tomllib
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
 
+from worktree_shield.files import RefusedError, read_text_inside
 from worktree_shield.models import Policy, PolicyLevel, Repository
 
 POLICY_FILE = ".worktree-shield.toml"
@@ -60,24 +59,12 @@ def load_policy(worktree: Path) -> Policy:
     it) and at most :data:`MAX_POLICY_BYTES` long.
     """
     path = worktree / POLICY_FILE
-    if not os.path.lexists(path):
+    try:
+        text = read_text_inside(worktree, POLICY_FILE, MAX_POLICY_BYTES)
+    except RefusedError as error:
+        raise PolicyError(f"{path} {error}") from None
+    if text is None:
         return Policy()
-    try:
-        target = path.resolve(strict=True)
-        if not target.is_relative_to(worktree.resolve(strict=True)):
-            raise PolicyError(f"{path} links to a file outside the worktree; it was not read")
-        if not stat.S_ISREG(target.stat().st_mode):
-            raise PolicyError(f"{path} is not a regular file")
-        with target.open("rb") as handle:
-            raw = handle.read(MAX_POLICY_BYTES + 1)
-    except OSError as error:
-        raise PolicyError(f"{path} could not be read: {error.strerror or error}") from None
-    if len(raw) > MAX_POLICY_BYTES:
-        raise PolicyError(f"{path} is larger than {MAX_POLICY_BYTES} bytes; it was not read")
-    try:
-        text = raw.decode("utf-8")
-    except UnicodeDecodeError:
-        raise PolicyError(f"{path} is not UTF-8 text") from None
     return parse_policy(text, str(path))
 
 
