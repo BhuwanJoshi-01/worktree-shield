@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -92,7 +93,8 @@ def test_the_command_marks_shared_resources(
     assert "3 worktrees, 3 resources, 2 used by more than one worktree" in out
     assert "tcp://*:5173 3 worktrees" in out
     assert "db://postgres/localhost:5432/shop_dev 2 worktrees" in out
-    assert "shop/worktrees/billing .env.example:1 PORT=5174" in out
+    # worktree names use the platform's separator: shop\worktrees\billing on Windows
+    assert re.search(r"shop[\\/]worktrees[\\/]billing \.env\.example:1 PORT=5174", out)
     assert ".env and .env.local were not read" in out
 
 
