@@ -24,8 +24,6 @@ from worktree_shield.models import (
     Worktree,
 )
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-010")
-
 A, B = "/src/app", "/src/app-login"
 REPOSITORY = Repository("/src/app/.git", A, False, (Worktree(A), Worktree(B)))
 
@@ -266,3 +264,67 @@ def test_every_rule_runs_and_ids_are_unique() -> None:
     ids = [rule.id for rule in builtin_rules()]
     assert len(ids) == len(set(ids))
     assert set(diagnose()) == set(ids)
+
+
+@pytest.mark.parametrize(
+    ("key", "summary"),
+    [
+        ("db://sqlite//srv/app.db", "The SQLite database /srv/app.db is used by 2 worktrees"),
+        (
+            "db://postgres/localhost:5432/?",
+            "An unnamed database on localhost:5432 is used by 2 worktrees",
+        ),
+    ],
+)
+def test_database_summaries(key: str, summary: str) -> None:
+    db = ResourceKind.DATABASE
+    assert diagnose(claim(A, db, key), claim(B, db, key))["WTS-DB-001"][0].summary == summary
+
+
+def test_git_explains_why_a_worktree_is_prunable() -> None:
+    gone = Worktree("/gone", prunable="gitdir file points to non-existent location")
+    repository = Repository("/src/app/.git", A, False, (Worktree(A), gone))
+    (finding,) = diagnose(repository=repository)["WTS-GIT-002"]
+    assert finding.reason.endswith("Git says: gitdir file points to non-existent location.")
+
+
+def test_a_known_process_outside_the_worktrees_and_a_host_name() -> None:
+    runtime = RuntimeFacts(
+        (Listener("tcp", "127.0.0.1", 8000, 42, "uvicorn", "it runs outside every worktree"),)
+    )
+    found = diagnose(claim(A, PORT, "tcp://localhost:8000"), runtime=runtime)
+    (blocker,) = found["WTS-PORT-002"]
+    assert blocker.reason.startswith(
+        "uvicorn (pid 42) listens on it (it runs outside every worktree)"
+    )
+    assert blocker.certainty is not None
+    assert blocker.certainty.value == "possible"  # localhost may not be 127.0.0.1
+    assert blocker.status is Status.WARN
+
+
+def test_a_path_outside_every_allowed_one_still_warns() -> None:
+    path = ResourceKind.ABSOLUTE_PATH
+    found = diagnose(
+        claim(A, path, "path:///srv/uploads"),
+        claim(B, path, "path:///srv/uploads"),
+        policy=Policy(allow_paths=("/tmp/cache", "/srv/other")),  # noqa: S108
+    )
+    assert status(found, "WTS-PATH-001") == [Status.WARN]
+
+
+def test_remaining_branches() -> None:
+    db = ResourceKind.DATABASE
+    shared_db = (
+        claim(A, db, "db://postgres/localhost:5432/app"),
+        claim(B, db, "db://postgres/localhost:5432/app"),
+    )
+    assert status(diagnose(*shared_db, policy=Policy(allow_ports=(6379,))), "WTS-DB-001") == [
+        Status.WARN
+    ]
+    assert status(diagnose(policy=Policy(include_env_files=True)), "WTS-ENV-001") == [Status.PASS]
+    elsewhere = RuntimeFacts(
+        (Listener("tcp", "0.0.0.0", 9999, None, None, "owned by a process of another user"),)
+    )
+    assert status(diagnose(claim(A, PORT, "tcp://*:1"), runtime=elsewhere), "WTS-PORT-002") == [
+        Status.PASS
+    ]

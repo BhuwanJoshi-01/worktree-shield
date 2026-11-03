@@ -166,3 +166,10 @@ def _path(key: str) -> str:
     if re.match(r"[A-Za-z]:[\\/]", path):
         return ntpath.normcase(ntpath.normpath(path))
     return posixpath.normpath(path)
+
+
+def path_within(key: str, directory: str) -> bool:
+    """Whether the path of ``key`` (``path://…``) is ``directory`` or lies inside it."""
+    path, root = _path(key), _path(f"path://{directory}")
+    separator = "\\" if "\\" in path or "\\" in root else "/"
+    return path == root or path.startswith(root.rstrip(separator) + separator)
