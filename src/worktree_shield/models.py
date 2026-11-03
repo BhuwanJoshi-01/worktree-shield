@@ -146,6 +146,25 @@ def utc_timestamp() -> str:
 
 
 @dataclass(frozen=True, slots=True)
+class Worktree:
+    """One entry of ``git worktree list --porcelain``.
+
+    ``branch`` is the full ref (``refs/heads/feature``) or ``None`` when detached or
+    bare. ``locked`` and ``prunable`` carry Git's reason, ``""`` when it gave none and
+    ``None`` when the flag is not set. A prunable worktree is listed but its directory
+    is gone; it is reported, never pruned.
+    """
+
+    path: str
+    head: str | None = None
+    branch: str | None = None
+    bare: bool = False
+    detached: bool = False
+    locked: str | None = None
+    prunable: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
 

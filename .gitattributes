@@ -1,0 +1,2 @@
+# Captured command output: byte-exact on every platform (NUL bytes, a newline inside a path).
+tests/fixtures/git/*.porcelain binary
