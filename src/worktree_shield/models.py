@@ -269,6 +269,27 @@ class SkippedFile:
 
 
 @dataclass(frozen=True, slots=True)
+class Collision:
+    """Two or more worktrees claiming the same resource.
+
+    ``key`` names the resource (the first of the overlapping keys), ``claims`` are all
+    claims involved, ``certainty`` says how sure the overlap is and ``reason`` why, in a
+    sentence a report can show.
+    """
+
+    kind: ResourceKind
+    key: str
+    certainty: Certainty
+    reason: str
+    claims: tuple[ResourceClaim, ...]
+
+    @property
+    def worktrees(self) -> tuple[str, ...]:
+        """The worktrees involved, in the order of their first claim."""
+        return tuple(dict.fromkeys(claim.worktree for claim in self.claims))
+
+
+@dataclass(frozen=True, slots=True)
 class UnreadableValue:
     """A value that names a resource but could not be read safely, such as a database
     URL whose host is uncertain. ``name`` is the variable or field, never its value."""

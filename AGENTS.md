@@ -24,11 +24,16 @@ src/worktree_shield/
   cli.py          Typer app + main(): exit codes, redacted internal errors (WTS_DEBUG=1 for tracebacks)
   models.py       Status/Severity/Confidence, Certainty (confirmed/probable/possible/unknown), SourceRef,
                   Evidence, Finding (codes WTS-<AREA>-<NNN>), ProbeFailure, Policy/PolicyLevel,
-                  ResourceKind (listen_port vs client_endpoint …), ResourceClaim, SkippedFile, Snapshot
+                  ResourceKind (listen_port vs client_endpoint …), ResourceClaim, SkippedFile,
+                  UnreadableValue, Collision, Snapshot
   runner.py       CommandRunner protocol, SubprocessRunner (no shell, timeout kills the process group,
                   capped output), probe_failure()
   privacy.py      strip_control(), RedactionContext, Redactor, redact_snapshot()
   exit_codes.py   ExitCode: 0 ok, 1 strict, 2 error, 3 not in a Git repository, 130 interrupted
+  overlap.py      overlap(kind, a, b) -> same/possible/none: */0.0.0.0/:: wildcards (dual-stack),
+                  localhost vs addresses, loopback DB servers, normalised and nested paths
+  collisions.py   find_collisions(claims): connected components over overlap(), more than one
+                  worktree; certainty confirmed (runtime) / probable / possible; reasons
   orchestrator.py inspect_worktrees(), inspect_resources(): discovery + policy + static
                   collectors over every worktree with files; builds the Snapshot (facts only)
   config.py       .worktree-shield.toml: parse_policy() (tomllib, every key checked, unknown = error),
