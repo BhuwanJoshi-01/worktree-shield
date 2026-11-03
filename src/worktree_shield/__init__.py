@@ -6,7 +6,3 @@ try:
     __version__ = version("worktree-shield")
 except PackageNotFoundError:  # imported from a source tree that was never installed
     __version__ = "0+unknown"
-
-
-def main() -> None:
-    print("Hello from worktree-shield!")
