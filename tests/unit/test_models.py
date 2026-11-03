@@ -180,3 +180,4 @@ def test_a_claim_records_its_source_and_defaults_to_static() -> None:
 def test_a_snapshot_starts_without_claims() -> None:
     snapshot = Snapshot("0.1.0", "t")
     assert (snapshot.policy, snapshot.claims, snapshot.skipped) == (None, (), ())
+    assert snapshot.unreadable == ()
