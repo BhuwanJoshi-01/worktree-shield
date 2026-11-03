@@ -1,0 +1,18 @@
+# Every key, with values other than the defaults.
+schema_version = 1
+
+[scan]
+include_runtime = false
+include_env_files = true
+max_file_bytes = 65536
+
+[policy]
+shared_host_ports = "warn"
+shared_database = "deny"
+shared_compose_projects = "deny"
+fixed_container_names = "allow"
+shared_absolute_paths = "deny"
+
+[allow]
+ports = [5432, 6379]
+paths = ["/tmp/shared-download-cache"]
