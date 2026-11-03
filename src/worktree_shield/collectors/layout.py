@@ -35,6 +35,10 @@ CONFIG_NAMES = frozenset(
         *VITE_FILES,
         *COMPOSE_FILES,
         *OVERRIDE_FILES,
+        "Procfile",
+        "Procfile.dev",
+        ".devcontainer",
+        ".devcontainer.json",
     )
 )
 SKIPPED_DIRECTORIES = frozenset(

@@ -10,8 +10,6 @@ import pytest
 from tests.fakes import read_fixture
 from worktree_shield.models import Policy
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 PROCFILE = """\
 # processes for foreman / honcho
 web: bundle exec rails server -p 3000
@@ -98,3 +96,13 @@ def test_jsonc_comments_and_trailing_commas() -> None:
     stripped = strip_jsonc(text)
     assert json.loads(stripped) == {"a": "b // c", "e": [1, 2]}
     assert stripped.count("\n") == text.count("\n")  # lines stay where they were
+
+
+def test_more_entry_shapes(tmp_path: Path) -> None:
+    (tmp_path / ".devcontainer.json").write_text(
+        '{"forwardPorts": [null, {"port": 1}, "db:54\\u00332"], "appPort": "8000"}',
+        encoding="utf-8",
+    )
+    claims = [(c.key, c.source.line) for c in _collect(tmp_path).claims]
+    # an escaped value cannot be found in the text: its line is unknown, not guessed
+    assert claims == [("tcp://localhost:5432", None), ("tcp://*:8000", 1)]
