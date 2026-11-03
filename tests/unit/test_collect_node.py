@@ -10,8 +10,6 @@ import pytest
 
 from worktree_shield.models import Policy
 
-pytestmark = pytest.mark.xfail(strict=True, reason="WTS-003")
-
 PACKAGE = """{
   "name": "web",
   "scripts": {
@@ -85,6 +83,7 @@ def test_only_the_fragment_naming_the_port_is_kept(tmp_path: Path) -> None:
         '{"scripts": {"dev": 5173}}',
         '{"config": {"port": "not a port"}}',
         '{"config": "port=1"}',
+        '{"config": {"port": true}}',
     ],
 )
 def test_unexpected_shapes_yield_nothing(tmp_path: Path, text: str) -> None:

@@ -54,3 +54,9 @@ def is_absolute_path(value: str) -> bool:
 def path_key(value: str) -> str:
     """``path:///srv/cache`` for an absolute path, trailing separators removed."""
     return "path://" + value.rstrip("/\\")
+
+
+def tcp_key(host: str | None, port: int, default: str = "*") -> str:
+    """``tcp://127.0.0.1:5173``; ``default`` stands for a host the config leaves open."""
+    server = host or default
+    return f"tcp://[{server}]:{port}" if ":" in server else f"tcp://{server}:{port}"

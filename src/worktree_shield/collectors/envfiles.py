@@ -11,7 +11,13 @@ from __future__ import annotations
 
 from pathlib import PurePosixPath
 
-from worktree_shield.collectors.base import Collected, Scope, is_absolute_path, path_key
+from worktree_shield.collectors.base import (
+    Collected,
+    Scope,
+    is_absolute_path,
+    path_key,
+    tcp_key,
+)
 from worktree_shield.models import (
     Policy,
     ResourceClaim,
@@ -94,10 +100,8 @@ def _port_claim(
     host = None
     if host_entry is not None and not host_entry.reference:
         host = literal_host(host_entry.value)
-    client = kind is ResourceKind.CLIENT_ENDPOINT
-    server = host or ("localhost" if client else "*")
-    shown = f"[{server}]" if ":" in server else server
+    default = "localhost" if kind is ResourceKind.CLIENT_ENDPOINT else "*"
     detail = f"{entry.key}={port}"
     if host_entry is not None and host is not None:
         detail += f" ({host_entry.key}={host_entry.value.strip()})"
-    return ResourceClaim(kind, f"tcp://{shown}:{port}", scope.worktree, source, detail)
+    return ResourceClaim(kind, tcp_key(host, port, default), scope.worktree, source, detail)
