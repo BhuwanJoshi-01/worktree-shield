@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from worktree_shield.collectors.base import Collected, Scope
+from worktree_shield.collectors.compose import collect_compose
 from worktree_shield.collectors.envfiles import collect_env_files
 from worktree_shield.collectors.layout import config_directories
 from worktree_shield.collectors.node import collect_package_json
@@ -18,3 +19,4 @@ def collect_worktree(scope: Scope, policy: Policy, out: Collected) -> None:
         collect_package_json(scope, directory, out)
         collect_vite_config(scope, directory, out)
         collect_pyproject(scope, directory, out)
+        collect_compose(scope, directory, policy, out)

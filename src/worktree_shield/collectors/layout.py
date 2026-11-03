@@ -19,6 +19,7 @@ from collections import deque
 from pathlib import Path, PurePosixPath
 
 from worktree_shield.collectors.base import Collected, Scope
+from worktree_shield.collectors.compose import COMPOSE_FILES, OVERRIDE_FILES
 from worktree_shield.collectors.envfiles import LOCAL_FILES, TEMPLATE_FILES
 from worktree_shield.collectors.vite import CONFIG_FILES as VITE_FILES
 from worktree_shield.models import SkippedFile
@@ -26,7 +27,15 @@ from worktree_shield.models import SkippedFile
 MAX_DEPTH = 3
 MAX_DIRECTORIES = 2000
 CONFIG_NAMES = frozenset(
-    (*TEMPLATE_FILES, *LOCAL_FILES, "package.json", "pyproject.toml", *VITE_FILES)
+    (
+        *TEMPLATE_FILES,
+        *LOCAL_FILES,
+        "package.json",
+        "pyproject.toml",
+        *VITE_FILES,
+        *COMPOSE_FILES,
+        *OVERRIDE_FILES,
+    )
 )
 SKIPPED_DIRECTORIES = frozenset(
     {

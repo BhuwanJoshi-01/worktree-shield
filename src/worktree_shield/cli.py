@@ -133,11 +133,12 @@ def resources(
         ),
     ] = False,
 ) -> None:
-    """List the ports, databases and paths each worktree declares in its configuration.
+    """List the ports, databases, Compose names and paths each worktree declares.
 
-    Reads .env templates, package.json, vite.config.* and pyproject.toml as data; nothing
-    is run. Resources used by more than one worktree are marked. Exits with 2 for a
-    policy file that cannot be used and 3 outside a Git repository.
+    Reads .env templates, package.json, vite.config.*, pyproject.toml and Compose files
+    as data; nothing is run and Docker is not contacted. Resources used by more than one
+    worktree are marked. Exits with 2 for a policy file that cannot be used and 3 outside
+    a Git repository.
     """
     redactor = Redactor(RedactionContext.current())
     try:
