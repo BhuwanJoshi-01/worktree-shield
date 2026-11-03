@@ -310,15 +310,6 @@ def _render_gaps(snapshot: Snapshot, label: Callable[[str], str], console: Conso
     elif snapshot.policy is not None:
         console.print()
         console.print(Text("Running processes were not looked at.", style="dim"))
-    if snapshot.policy is not None and not snapshot.policy.include_env_files:
-        console.print()
-        console.print(
-            Text(
-                ".env and .env.local were not read; --include-env reads them (only ports, "
-                "database servers and paths are kept from them).",
-                style="dim",
-            )
-        )
     line = redaction_line(snapshot)
     if line:
         console.print()

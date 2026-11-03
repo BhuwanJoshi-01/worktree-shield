@@ -9,7 +9,8 @@ values of every other variable are dropped.
 
 from __future__ import annotations
 
-from pathlib import PurePosixPath
+import os
+from pathlib import Path, PurePosixPath
 
 from worktree_shield.collectors.base import (
     Collected,
@@ -22,6 +23,7 @@ from worktree_shield.models import (
     Policy,
     ResourceClaim,
     ResourceKind,
+    SkippedFile,
     SourceRef,
     UnreadableValue,
 )
@@ -37,6 +39,7 @@ from worktree_shield.parsers.dotenv import EnvEntry, parse_dotenv
 
 TEMPLATE_FILES = (".env.example", ".env.sample", ".env.template")
 LOCAL_FILES = (".env", ".env.local")
+NOT_READ = "was not read: .env files are read only with --include-env"
 
 
 def collect_env_files(
@@ -44,6 +47,11 @@ def collect_env_files(
 ) -> None:
     """The claims of the ``.env`` files in one directory of a worktree."""
     names = TEMPLATE_FILES + (LOCAL_FILES if policy.include_env_files else ())
+    if not policy.include_env_files:
+        folder = Path(scope.root, *directory.parts)
+        for name in LOCAL_FILES:  # noted, not opened: what runs may differ from what was read
+            if os.path.lexists(folder / name):
+                out.skipped.append(SkippedFile(scope.source(directory / name), NOT_READ))
     for name in names:
         relative = directory / name
         text = scope.read(relative, out)

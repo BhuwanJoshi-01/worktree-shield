@@ -95,7 +95,6 @@ def test_the_command_marks_shared_resources(
     assert "db://postgres/localhost:5432/shop_dev 2 worktrees" in out
     # worktree names use the platform's separator: shop\worktrees\billing on Windows
     assert re.search(r"shop[\\/]worktrees[\\/]billing \.env\.example:1 PORT=5174", out)
-    assert ".env and .env.local were not read" in out
 
 
 def test_a_prunable_worktree_is_left_out(shop: Path) -> None:
@@ -112,7 +111,9 @@ def test_env_files_only_with_the_flag_and_never_their_secrets(
         encoding="utf-8",
     )
     assert _run(monkeypatch, "resources", "--repo", str(shop)) == 0
-    assert "9000" not in capsys.readouterr().out
+    unread = _out(capsys)
+    assert "9000" not in unread
+    assert ".env was not read: .env files are read only with --include-env" in unread
     assert _run(monkeypatch, "resources", "--repo", str(shop), "--include-env") == 0
     out = _out(capsys)
     assert "tcp://*:9000" in out
