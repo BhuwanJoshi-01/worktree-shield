@@ -10,9 +10,12 @@ from worktree_shield.models import (
     Evidence,
     FailureKind,
     Finding,
+    Observation,
     Policy,
     PolicyLevel,
     ProbeFailure,
+    ResourceClaim,
+    ResourceKind,
     Severity,
     Snapshot,
     SourceRef,
@@ -145,3 +148,35 @@ def test_default_policy_is_deliberate() -> None:
     assert policy.include_runtime is True  # read-only process inspection
     assert policy.max_file_bytes == 262_144
     assert (policy.allow_ports, policy.allow_paths, policy.source) == ((), (), None)
+
+
+def test_resource_kinds_are_the_documented_strings() -> None:
+    assert [kind.value for kind in ResourceKind] == [
+        "listen_port",
+        "client_endpoint",
+        "database",
+        "compose_project",
+        "container_name",
+        "volume",
+        "absolute_path",
+    ]
+    assert [o.value for o in Observation] == ["static", "runtime"]
+
+
+def test_a_claim_records_its_source_and_defaults_to_static() -> None:
+    claim = ResourceClaim(
+        ResourceKind.LISTEN_PORT,
+        "tcp://*:5173",
+        "/src/app-login",
+        SourceRef("/src/app-login", "vite.config.ts", 4),
+        "server.port = 5173",
+    )
+    assert claim.observation is Observation.STATIC
+    assert claim.strict is None
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        claim.key = "tcp://*:3000"  # type: ignore[misc]
+
+
+def test_a_snapshot_starts_without_claims() -> None:
+    snapshot = Snapshot("0.1.0", "t")
+    assert (snapshot.policy, snapshot.claims, snapshot.skipped) == (None, (), ())

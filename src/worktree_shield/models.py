@@ -214,6 +214,60 @@ class Policy:
     source: str | None = None
 
 
+class ResourceKind(StrEnum):
+    """What a worktree claims.
+
+    A *listen* port is one its own process binds; a *client endpoint* is a server it
+    connects to (a shared Postgres on 5432). Two listeners on one port collide; two
+    clients of one server do not, which is why they are different kinds.
+    """
+
+    LISTEN_PORT = "listen_port"
+    CLIENT_ENDPOINT = "client_endpoint"
+    DATABASE = "database"
+    COMPOSE_PROJECT = "compose_project"
+    CONTAINER_NAME = "container_name"
+    VOLUME = "volume"
+    ABSOLUTE_PATH = "absolute_path"
+
+
+class Observation(StrEnum):
+    """How a claim was found: read from configuration, or seen on the running system."""
+
+    STATIC = "static"
+    RUNTIME = "runtime"
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceClaim:
+    """One resource a worktree declares or uses, with where it was found.
+
+    ``key`` identifies the resource (``tcp://*:5173``, ``db://postgres/localhost:5432/app``);
+    claims of different worktrees with overlapping keys are collision candidates.
+    ``detail`` is what was read, already reduced to safe facts: never a password or the
+    value of a variable no rule needs. ``strict`` says whether the program fails when
+    the port is taken (``True``) or moves to another one (``False``); ``None`` when the
+    configuration does not say.
+    """
+
+    kind: ResourceKind
+    key: str
+    worktree: str
+    source: SourceRef
+    detail: str
+    observation: Observation = Observation.STATIC
+    strict: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SkippedFile:
+    """A configuration file that was found but not read, and why (too large, a link
+    out of the worktree, not UTF-8…). A skipped file can hide a collision."""
+
+    source: SourceRef
+    reason: str
+
+
 @dataclass(frozen=True, slots=True)
 class RedactionCount:
     """How many values of one kind (``home_path``, ``secret_value``…) were redacted."""
@@ -226,14 +280,18 @@ class RedactionCount:
 class Snapshot:
     """Everything one scan observed and concluded; the input of every renderer.
 
-    ``repository`` is ``None`` when discovery failed (see ``probe_failures``). Claim and
-    runtime facts join this record as their collectors are added.
+    ``repository`` is ``None`` when discovery failed (see ``probe_failures``). ``policy``
+    is the effective policy, ``claims`` every resource found in the worktrees and
+    ``skipped`` the configuration files that could not be read.
     """
 
     tool_version: str
     created_at: str
     schema_version: int = SCHEMA_VERSION
     repository: Repository | None = None
+    policy: Policy | None = None
+    claims: tuple[ResourceClaim, ...] = ()
+    skipped: tuple[SkippedFile, ...] = ()
     probe_failures: tuple[ProbeFailure, ...] = ()
     findings: tuple[Finding, ...] = ()
     redactions: tuple[RedactionCount, ...] = ()
