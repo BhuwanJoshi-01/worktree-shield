@@ -44,3 +44,10 @@ for shared ports, databases, Docker Compose names and absolute paths.
   tied to a worktree by the working directory of their process, and listeners
   outside the worktrees on ports a worktree configures. Only process names and
   working directories are read; no root needed.
+- `worktree-shield scan [--repo PATH] [--strict] [--scope all|static|runtime]
+  [--include-env] [--all]`: thirteen rules with stable IDs (WTS-PORT-001/002,
+  WTS-DB-001/002, WTS-DOCKER-001/002/003, WTS-PATH-001, WTS-ENV-001,
+  WTS-CONFIG-001, WTS-GIT-002, WTS-RUNTIME-001, WTS-POLICY-001). Collisions are
+  confirmed (a running server in another worktree), probable or possible; the
+  status follows the policy level, and `--strict` exits 1 when a finding
+  fails. A possible collision never fails. See docs/rules.md.

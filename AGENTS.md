@@ -35,7 +35,8 @@ src/worktree_shield/
   collisions.py   find_collisions(claims): connected components over overlap(), more than one
                   worktree; certainty confirmed (runtime) / probable / possible; reasons
   orchestrator.py inspect_worktrees(), inspect_resources(): discovery + policy + static
-                  collectors over every worktree with files; builds the Snapshot (facts only)
+                  collectors + runtime over every worktree with files (facts only); diagnose()
+                  adds the findings of every rule
   config.py       .worktree-shield.toml: parse_policy() (tomllib, every key checked, unknown = error),
                   load_policy() (regular file inside the worktree, 64 KiB cap), apply_overrides()
   files.py        read_inside(): THE way to read a worktree file (stays inside the worktree, regular
@@ -57,7 +58,12 @@ src/worktree_shield/
                   directories: 3 deep, never into another .git, skip list), static.py
   git/            porcelain.py (parse `worktree list --porcelain -z`), discovery.py (git_argv: -c
                   core.fsmonitor=false -C DIR; GIT_ENV: optional locks off, no prompt, LC_ALL=C)
-  reports/        terminal.py (plain Text; display_path() escapes control characters)
+  rules/          engine.py (Rule, Context, evaluate, status_for: deny fails probable/confirmed only),
+                  catalog.py (order), shared.py (collision rules), runtime.py (PORT-002,
+                  RUNTIME-001), context.py (DB-002, CONFIG-001, ENV-001, GIT-002, POLICY-001);
+                  docs/rules.md lists every rule (a test compares it with the catalog)
+  reports/        terminal.py (plain Text; display_path() escapes control characters;
+                  worktree_names()), findings.py (scan report; caused_by shown under the cause)
 tests/
   conftest.py     autouse no_network guard (UNIX sockets allowed); HYPOTHESIS_PROFILE=thorough
   fakes.py        FakeRunner: scripted commands only, anything else fails the test;
@@ -71,6 +77,7 @@ tests/
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
 docs/what-is-read.md  every file and directory the collectors read, and what they keep
+docs/rules.md     every WTS rule, how status follows from policy level and certainty
 .github/          CI, issue forms, PR template
 ```
 
