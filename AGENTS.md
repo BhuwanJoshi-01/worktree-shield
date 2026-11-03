@@ -64,6 +64,8 @@ src/worktree_shield/
                   docs/rules.md lists every rule (a test compares it with the catalog)
   reports/        terminal.py (plain Text; display_path() escapes control characters;
                   worktree_names()), findings.py (scan report; caused_by shown under the cause)
+                  json_report.py (+ summary; docs/json-schema-v1.json: change both or neither),
+                  markdown.py (escaped; cell_code), sarif.py (2.1.0; located problems only)
 tests/
   conftest.py     autouse no_network guard (UNIX sockets allowed); HYPOTHESIS_PROFILE=thorough
   fakes.py        FakeRunner: scripted commands only, anything else fails the test;
@@ -74,10 +76,15 @@ tests/
   fixtures/policy/ hand-written policy files
   fixtures/env/   hand-written .env files (no real credentials); vite/, python/, compose/: configs
   unit/           unit tests; Git fixtures are real temporary repositories
+  contract/       JSON schema contract (every model field in the schema) and the canary test:
+                  planted secrets must reach no renderer
 docs/roadmap.md   requirement IDs WTS-001 … and what v0.1 includes
 docs/policy.md    every key of .worktree-shield.toml, levels, precedence, what makes a file invalid
 docs/what-is-read.md  every file and directory the collectors read, and what they keep
 docs/rules.md     every WTS rule, how status follows from policy level and certainty
+docs/json-output.md   JSON summary fields, SARIF mapping, Markdown; json-schema-v1.json
+examples/         conflicting-worktrees/build.py: three colliding worktrees (--fixed: none)
+scripts/          check_sarif.py (CI validates SARIF against the pinned OASIS schema)
 .github/          CI, issue forms, PR template
 ```
 
