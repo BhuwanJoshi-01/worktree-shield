@@ -31,6 +31,8 @@ worktree-shield report --format sarif --output conflicts.sarif   # also markdown
 worktree-shield scan --strict --format json                      # for agents and scripts
 ```
 
+![worktree-shield scan on three worktrees that share a port, a database and a Compose project](docs/images/scan.svg)
+
 Try it on a repository built to collide:
 
 ```bash
@@ -91,7 +93,8 @@ policy file, CI exit codes and SARIF.
 - [Rules](docs/rules.md): every finding ID, what decides its status, how to fix it
 - [Policy file](docs/policy.md): `.worktree-shield.toml`
 - [What is read](docs/what-is-read.md), and what never is
-- [JSON, SARIF and Markdown output](docs/json-output.md)
+- [JSON, SARIF and Markdown output](docs/json-output.md), with [sample reports](docs/sample-reports/)
+- [Architecture](docs/architecture.md), [privacy](docs/privacy.md), [troubleshooting](docs/troubleshooting.md)
 
 ## License
 

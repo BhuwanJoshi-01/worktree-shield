@@ -65,3 +65,5 @@ for shared ports, databases, Docker Compose names and absolute paths.
 - A GitHub Action (`uses: BhuwanJoshi-01/worktree-shield@…`): checks the refs in
   `compare-with` out next to the branch as worktrees, scans statically, writes
   SARIF and fails with `strict`.
+- Documentation: architecture, privacy, troubleshooting, a command reference,
+  sample reports of the example repository, and a project site.
