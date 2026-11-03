@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -48,7 +49,8 @@ def test_values_from_the_file_show_the_default_they_replace(
     )
     assert _run(monkeypatch, "policy", "--repo", str(main)) == 0
     out = _out(capsys)
-    assert f"Policy from {main / POLICY_FILE}" in out
+    # the path may be shown redacted (~), as on Windows where the temp dir is in the home
+    assert re.search(r"Policy from \S+[\\/]app[\\/]\.worktree-shield\.toml ", out)
     assert "policy.shared_database deny default: warn" in out
     assert "allow.ports 5432 default: none" in out
     # a value the file leaves alone has no note
