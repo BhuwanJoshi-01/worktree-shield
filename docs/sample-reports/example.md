@@ -34,7 +34,7 @@ worktree-shield 0.1.0, 2026-11-04T12:00:00Z.
 
 **Next step:** Give each worktree its own port, for example in its own .env (PORT=5173 in one, PORT=5174 in the other), or run one server at a time.
 
-**Check afterwards:** `worktree-shield scan --strict`
+**Check afterwards:** `worktree-shield scan --strict --include-env`
 
 *Note:* The servers collide only when both run at the same time on this host.
 
@@ -50,7 +50,7 @@ worktree-shield 0.1.0, 2026-11-04T12:00:00Z.
 
 **Next step:** Give each worktree its own database name in its .env (app\_dev\_login, app\_dev\_billing), or allow the server's port in \[allow\] ports if sharing it is intended.
 
-**Check afterwards:** `worktree-shield scan --strict`
+**Check afterwards:** `worktree-shield scan --strict --include-env`
 
 *Note:* Sharing is harmless when the worktrees only read from the database.
 

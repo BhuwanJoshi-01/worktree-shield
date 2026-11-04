@@ -9,7 +9,7 @@
     "worktrees": [
       {
         "path": "~/app",
-        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "head": "6f3ebfb50134a496fc9e590e058cf223d860cda2",
         "branch": "refs/heads/main",
         "bare": false,
         "detached": false,
@@ -18,7 +18,7 @@
       },
       {
         "path": "~/app-billing",
-        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "head": "6f3ebfb50134a496fc9e590e058cf223d860cda2",
         "branch": "refs/heads/billing",
         "bare": false,
         "detached": false,
@@ -27,7 +27,7 @@
       },
       {
         "path": "~/app-login",
-        "head": "5cba91a937cd2ed68842f4b622409547b5723c1e",
+        "head": "6f3ebfb50134a496fc9e590e058cf223d860cda2",
         "branch": "refs/heads/login",
         "bare": false,
         "detached": false,
@@ -261,7 +261,7 @@
         }
       ],
       "recommended_action": "Give each worktree its own port, for example in its own .env (PORT=5173 in one, PORT=5174 in the other), or run one server at a time.",
-      "verify_command": "worktree-shield scan --strict",
+      "verify_command": "worktree-shield scan --strict --include-env",
       "limitations": [
         "The servers collide only when both run at the same time on this host."
       ],
@@ -333,7 +333,7 @@
         }
       ],
       "recommended_action": "Give each worktree its own database name in its .env (app_dev_login, app_dev_billing), or allow the server's port in [allow] ports if sharing it is intended.",
-      "verify_command": "worktree-shield scan --strict",
+      "verify_command": "worktree-shield scan --strict --include-env",
       "limitations": [
         "Sharing is harmless when the worktrees only read from the database."
       ],

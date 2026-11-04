@@ -112,7 +112,6 @@ def test_following_the_plan_passes_strict(
     assert found["WTS-DOCKER-001"] == ["pass"]
 
 
-@pytest.mark.xfail(strict=True, reason="WTS-009")
 def test_a_fix_in_env_files_is_checked_with_include_env(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:

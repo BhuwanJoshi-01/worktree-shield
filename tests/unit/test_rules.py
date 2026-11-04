@@ -90,7 +90,8 @@ def test_a_shared_port_fails_under_the_default_policy() -> None:
     assert finding.worktrees == (A, B)
     assert [s.path for s in finding.sources] == [".env.example", ".env.example"]
     assert finding.recommended_action is not None
-    assert finding.verify_command == "worktree-shield scan --strict"
+    # The values come from .env.example, so the fix goes into a .env.
+    assert finding.verify_command == "worktree-shield scan --strict --include-env"
 
 
 def test_policy_levels_set_the_status() -> None:

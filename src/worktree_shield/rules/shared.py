@@ -16,7 +16,7 @@ from worktree_shield.models import (
     Status,
 )
 from worktree_shield.overlap import path_within
-from worktree_shield.rules.common import VERIFY, evidence, name_of, plain, port_of
+from worktree_shield.rules.common import evidence, name_of, plain, port_of, verify_for
 from worktree_shield.rules.engine import Context, Rule, confidence_for, status_for
 
 
@@ -205,7 +205,7 @@ def _check(spec: _Kind) -> Callable[[Context], Iterator[Finding]]:
                 sources=tuple(claim.source for claim in collision.claims),
                 evidence=evidence(collision.claims),
                 recommended_action=_action(spec, collision),
-                verify_command=VERIFY,
+                verify_command=verify_for(collision.claims, context.policy),
                 limitations=(spec.limitation,),
                 caused_by=caused_by,
             )

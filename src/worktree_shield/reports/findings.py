@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable
+from pathlib import PurePosixPath
 
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
+from worktree_shield.collectors.envfiles import LOCAL_FILES
 from worktree_shield.models import Finding, Snapshot, Status
 from worktree_shield.plan import Suggestion
 from worktree_shield.reports.terminal import (
@@ -21,6 +23,7 @@ from worktree_shield.reports.terminal import (
     render_failed_discovery,
     worktree_names,
 )
+from worktree_shield.rules.common import VERIFY, VERIFY_WITH_ENV
 
 PROBLEMS = (Status.FAIL, Status.WARN, Status.UNKNOWN)
 LABEL = {
@@ -149,11 +152,11 @@ def render_plan(snapshot: Snapshot, suggestions: list[Suggestion], console: Cons
         console.print(Text("Nothing to change: no collision needs attention."))
         return
     name, _ = worktree_names(snapshot.repository)
+    in_env = any(PurePosixPath(s.where.split(":", 1)[0]).name in LOCAL_FILES for s in suggestions)
+    reads_env = snapshot.policy is not None and snapshot.policy.include_env_files
+    check = VERIFY_WITH_ENV if in_env and not reads_env else VERIFY
     console.print(
-        Text(
-            "Suggested changes. Nothing was changed: make them yourself, then run "
-            "worktree-shield scan --strict."
-        )
+        Text(f"Suggested changes. Nothing was changed: make them yourself, then run {check}.")
     )
     by_worktree: dict[str, list[Suggestion]] = {}
     for suggestion in suggestions:

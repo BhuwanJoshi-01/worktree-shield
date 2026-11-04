@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
+from pathlib import PurePosixPath
 
+from worktree_shield.collectors.envfiles import TEMPLATE_FILES
 from worktree_shield.models import (
     Confidence,
     Evidence,
     Finding,
+    Policy,
     ResourceClaim,
     Severity,
     SourceRef,
@@ -15,6 +19,16 @@ from worktree_shield.models import (
 )
 
 VERIFY = "worktree-shield scan --strict"
+VERIFY_WITH_ENV = VERIFY + " --include-env"
+
+
+def verify_for(claims: Iterable[ResourceClaim], policy: Policy) -> str:
+    """The scan that can see the fix: a value from a ``.env`` template is fixed in a
+    ``.env``, which a scan reads only with ``--include-env`` (or the policy's opt-in)."""
+    from_template = any(PurePosixPath(c.source.path).name in TEMPLATE_FILES for c in claims)
+    return VERIFY_WITH_ENV if from_template and not policy.include_env_files else VERIFY
+
+
 _PORT = re.compile(r"[a-z]+://.*:([0-9]+)")
 
 

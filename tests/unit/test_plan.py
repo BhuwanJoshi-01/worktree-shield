@@ -233,7 +233,6 @@ def test_a_value_without_the_old_port_and_no_repository() -> None:
     assert make_plan(Snapshot("0", "t")) == []
 
 
-@pytest.mark.xfail(strict=True, reason="WTS-009")
 def test_the_plan_names_the_scan_that_reads_its_env_changes(
     example: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
