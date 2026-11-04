@@ -2,8 +2,12 @@
 
 **Audit parallel Git worktrees for shared ports, databases and Docker resources before your agents collide.**
 
-> **Status: before 0.1.0.** The commands below work from a checkout (`uv run worktree-shield …`); nothing is on
-> PyPI yet. See the [roadmap](docs/roadmap.md).
+[![CI](https://github.com/BhuwanJoshi-01/worktree-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/BhuwanJoshi-01/worktree-shield/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/LICENSE)
+[![Website](https://img.shields.io/badge/website-worktree--shield-1e1e24.svg)](https://bhuwanjoshi-01.github.io/worktree-shield/)
+
+> **Status:** 0.1.0 is the first release. It is tested on Linux and Windows; reports from macOS and from your own
+> worktree setups are very welcome. See the [roadmap](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/roadmap.md).
 
 Git worktrees give every agent or task its own checkout, but not its own infrastructure. Three worktrees can still
 start a dev server on the same port, migrate the same `app_dev` database, reuse one Docker Compose project name or
@@ -17,7 +21,18 @@ repo-feature-billing/   API -> :8001     DB -> postgres://localhost/app_dev
 
 Worktree Shield finds these shared resources in worktrees that **already exist**, however they were created
 (plain `git worktree`, a worktree manager or a coding agent), and reports each one with the file and line it came
-from and how certain the collision is:
+from and how certain the collision is.
+
+## Install
+
+Needs Python 3.11 or newer and Git.
+
+```bash
+uv tool install git+https://github.com/BhuwanJoshi-01/worktree-shield   # until the PyPI release
+pipx install git+https://github.com/BhuwanJoshi-01/worktree-shield      # or with pipx
+```
+
+## Use
 
 ```bash
 worktree-shield scan                 # all worktrees of the current repository, read-only
@@ -31,7 +46,7 @@ worktree-shield report --format sarif --output conflicts.sarif   # also markdown
 worktree-shield scan --strict --format json                      # for agents and scripts
 ```
 
-![worktree-shield scan on three worktrees that share a port, a database and a Compose project](docs/images/scan.svg)
+![worktree-shield scan on three worktrees that share a port, a database and a Compose project](https://raw.githubusercontent.com/BhuwanJoshi-01/worktree-shield/main/docs/images/scan.svg)
 
 Try it on a repository built to collide:
 
@@ -89,13 +104,13 @@ policy file, CI exit codes and SARIF.
 
 ## Documentation
 
-- [Command reference](docs/cli.md) and exit codes
-- [Rules](docs/rules.md): every finding ID, what decides its status, how to fix it
-- [Policy file](docs/policy.md): `.worktree-shield.toml`
-- [What is read](docs/what-is-read.md), and what never is
-- [JSON, SARIF and Markdown output](docs/json-output.md), with [sample reports](docs/sample-reports/)
-- [Architecture](docs/architecture.md), [privacy](docs/privacy.md), [troubleshooting](docs/troubleshooting.md)
+- [Command reference](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/cli.md) and exit codes
+- [Rules](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md): every finding ID, what decides its status, how to fix it
+- [Policy file](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/policy.md): `.worktree-shield.toml`
+- [What is read](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/what-is-read.md), and what never is
+- [JSON, SARIF and Markdown output](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/json-output.md), with [sample reports](https://github.com/BhuwanJoshi-01/worktree-shield/tree/main/docs/sample-reports)
+- [Architecture](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/architecture.md), [privacy](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/privacy.md), [troubleshooting](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/troubleshooting.md)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/LICENSE)

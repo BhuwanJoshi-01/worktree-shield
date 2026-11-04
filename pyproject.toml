@@ -9,12 +9,36 @@ authors = [
     { name = "BhuwanJoshi-01", email = "bhuwanj779@gmail.com" }
 ]
 requires-python = ">=3.11"
+keywords = ["git", "worktree", "ai-agents", "docker-compose", "ports", "sarif", "ci", "linter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
 dependencies = [
     "psutil>=7.2.2",
     "pyyaml>=6.0.3",
     "rich>=15.0.0",
     "typer>=0.27.3",
 ]
+
+[project.urls]
+Homepage = "https://bhuwanjoshi-01.github.io/worktree-shield/"
+Documentation = "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/cli.md"
+Source = "https://github.com/BhuwanJoshi-01/worktree-shield"
+Issues = "https://github.com/BhuwanJoshi-01/worktree-shield/issues"
+Changelog = "https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/CHANGELOG.md"
 
 [project.scripts]
 worktree-shield = "worktree_shield.cli:main"

@@ -5,10 +5,11 @@ All notable changes to this project are listed here. Versions follow
 `schema_version`, and finding IDs (`WTS-PORT-001` …) are stable: CI pipelines
 and agents depend on both.
 
-## Unreleased
+## 0.1.0 (2026-11-04)
 
-Nothing released yet. The first release (0.1.0) will audit existing worktrees
-for shared ports, databases, Docker Compose names and absolute paths.
+The first release: audit existing worktrees for shared ports, databases,
+Docker Compose names and absolute paths, read-only, with a GitHub Action.
+Website: https://bhuwanjoshi-01.github.io/worktree-shield/
 
 - `worktree-shield --help` and `--version` (also as `wtshield`). Exit codes: 0
   when the scan ran (whatever it found), 1 for `--strict` failures, 2 for usage
@@ -69,3 +70,7 @@ for shared ports, databases, Docker Compose names and absolute paths.
   sample reports of the example repository, and a project site.
 - Ports from `Procfile`/`Procfile.dev` and dev containers (`appPort`,
   `forwardPorts`).
+- With `--include-env`, a variable set in `.env` or `.env.local` replaces the
+  `.env.example` value for it (and `.env.local` replaces `.env`), so a worktree
+  that follows `plan` passes `scan --strict --include-env`; check commands
+  name `--include-env` when the fix goes into a `.env`.
