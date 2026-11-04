@@ -91,7 +91,6 @@ def test_the_command_line(tmp_path: Path, capsys: pytest.CaptureFixture[str]) ->
     assert builder.main([str(tmp_path / "demo")]) == 2  # never overwrites
 
 
-@pytest.mark.xfail(strict=True, reason="WTS-009")
 def test_following_the_plan_passes_strict(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:

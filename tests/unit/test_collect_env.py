@@ -116,10 +116,7 @@ def test_local_env_files_need_opt_in(tmp_path: Path) -> None:
     ]
     opted_in = _collect(tmp_path, Policy(include_env_files=True))
     assert opted_in.skipped == []
-    assert _claims(opted_in) == {
-        ("listen_port", "tcp://*:1111", ".env", 1),
-        ("listen_port", "tcp://*:2222", ".env.local", 1),
-    }
+    assert _claims(opted_in) == {("listen_port", "tcp://*:2222", ".env.local", 1)}  # wins
 
 
 def test_files_in_a_subdirectory(tmp_path: Path) -> None:
@@ -182,7 +179,6 @@ def test_only_literal_hosts_narrow_a_port(tmp_path: Path, host: str, key: str) -
     assert {c.key for c in _collect(tmp_path).claims} == {key}
 
 
-@pytest.mark.xfail(strict=True, reason="WTS-003")
 def test_a_local_file_overrides_the_template_for_its_keys(tmp_path: Path) -> None:
     # dotenv tools load .env.local over .env and never read the template, so with
     # --include-env a key set in a local file replaces the template's value for it.
