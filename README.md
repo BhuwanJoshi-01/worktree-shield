@@ -28,8 +28,8 @@ from and how certain the collision is.
 Needs Python 3.11 or newer and Git.
 
 ```bash
-uv tool install git+https://github.com/BhuwanJoshi-01/worktree-shield   # until the PyPI release
-pipx install git+https://github.com/BhuwanJoshi-01/worktree-shield      # or with pipx
+uv tool install worktree-shield
+pipx install worktree-shield          # or with pipx
 ```
 
 ## Use
