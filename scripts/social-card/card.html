@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Worktree Shield social card</title>
+<!-- Rendered to site/assets/social-card.png by scripts/render-social-card.sh (1280x640). -->
+<style>
+@font-face { font-family: "Overpass"; src: url("../../site/assets/fonts/overpass.woff2") format("woff2"); font-weight: 100 900; }
+@font-face { font-family: "Overpass Mono"; src: url("../../site/assets/fonts/overpass-mono.woff2") format("woff2"); font-weight: 300 700; }
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+body { background: #fff; color: #1e1e24; font-family: "Overpass", sans-serif; display: grid; grid-template-rows: auto 1fr; }
+.top { display: grid; grid-template-columns: 1fr 400px; gap: 40px; padding: 52px 64px 0; align-items: end; }
+.name { display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 30px; }
+.name svg { width: 44px; height: 44px; }
+h1 { margin: 22px 0 0; font-weight: 900; font-size: 58px; line-height: 1.02; letter-spacing: -0.02em; }
+.side { font-size: 22px; line-height: 1.45; color: #50505c; padding-bottom: 6px; }
+.side b { color: #1e1e24; }
+.side span { display: block; margin-top: 10px; font-size: 18px; white-space: nowrap; color: #1f5fbf; font-weight: 700; }
+svg.map { width: 1280px; height: 330px; display: block; }
+.line { fill: none; stroke-width: 12; stroke-linejoin: round; stroke-linecap: round; }
+.a { stroke: #d52b1e; } .b { stroke: #1f5fbf; } .c { stroke: #00875a; }
+.ic { fill: #fff; stroke: #1e1e24; stroke-width: 6; }
+.st { font: 800 24px "Overpass Mono", monospace; text-anchor: middle; fill: #1e1e24; }
+.bd rect { rx: 5px; } .bd text { font: 700 18px "Overpass Mono", monospace; fill: #fff; text-anchor: middle; }
+.term rect { rx: 22px; } .term text { font: 700 19px "Overpass Mono", monospace; fill: #fff; text-anchor: middle; }
+</style>
+</head>
+<body>
+  <div class="top">
+    <div>
+      <div class="name"><svg viewBox="0 0 32 32" aria-hidden="true"><use href="../../site/assets/favicon.svg#mark"/></svg>Worktree Shield</div>
+      <h1>Find what your worktrees share before your agents collide</h1>
+    </div>
+    <div class="side"><b>Ports, databases, Docker projects, paths.</b> Read-only, with the file and line of each.<span>github.com/BhuwanJoshi-01/worktree-shield</span></div>
+  </div>
+  <svg class="map" viewBox="0 0 1280 330" aria-hidden="true">
+    <path class="line a" d="M210 70 H330 L428 168 H1000 L1098 70 H1220"/>
+    <path class="line b" d="M210 182 H1220"/>
+    <path class="line c" d="M210 294 H330 L428 196 H1000 L1098 294 H1220"/>
+    <rect class="ic" x="497" y="152" width="34" height="60" rx="17"/>
+    <rect class="ic" x="697" y="152" width="34" height="60" rx="17"/>
+    <rect class="ic" x="897" y="152" width="34" height="60" rx="17"/>
+    <text class="st" x="514" y="132">5173</text>
+    <text class="st" x="714" y="132">app_dev</text>
+    <text class="st" x="914" y="132">app</text>
+    <g class="bd"><rect x="440" y="230" width="148" height="32" fill="#c4261d"/><text x="514" y="252">FAIL PORT-001</text></g>
+    <g class="bd"><rect x="648" y="230" width="132" height="32" fill="#8f5d00"/><text x="714" y="252">WARN DB-001</text></g>
+    <g class="bd"><rect x="829" y="230" width="170" height="32" fill="#8f5d00"/><text x="914" y="252">WARN DOCKER-001</text></g>
+    <g class="term"><rect x="40" y="48" width="170" height="44" fill="#d52b1e"/><text x="125" y="77">app</text></g>
+    <g class="term"><rect x="40" y="160" width="170" height="44" fill="#1f5fbf"/><text x="125" y="189">app-billing</text></g>
+    <g class="term"><rect x="40" y="272" width="170" height="44" fill="#00875a"/><text x="125" y="301">app-login</text></g>
+  </svg>
+</body>
+</html>
