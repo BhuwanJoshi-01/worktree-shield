@@ -6,8 +6,9 @@ written.
 
 ## v0.1: passive audit of existing worktrees
 
-All twelve are implemented and tested on real temporary repositories (see the tests named after each ID). The
-release waits for testers on other machines; macOS has not been tried yet.
+All twelve are implemented, tested on real temporary repositories (see the tests named after each ID) and released
+as 0.1.0. The test suite and the installed wheel run on Linux, Windows and macOS in CI; reports from real setups are
+welcome.
 
 | ID | Feature | Done when |
 | --- | --- | --- |
