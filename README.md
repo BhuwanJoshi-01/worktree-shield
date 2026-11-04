@@ -6,8 +6,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/LICENSE)
 [![Website](https://img.shields.io/badge/website-worktree--shield-1e1e24.svg)](https://bhuwanjoshi-01.github.io/worktree-shield/)
 
-> **Status:** 0.1.0 is the first release. It is tested on Linux and Windows; reports from macOS and from your own
-> worktree setups are very welcome. See the [roadmap](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/roadmap.md).
+> **Status:** 0.1.0 is the first release. CI runs it on Linux, Windows and macOS; reports from your own worktree
+> setups are very welcome. See the [roadmap](https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/roadmap.md).
 
 Git worktrees give every agent or task its own checkout, but not its own infrastructure. Three worktrees can still
 start a dev server on the same port, migrate the same `app_dev` database, reuse one Docker Compose project name or
