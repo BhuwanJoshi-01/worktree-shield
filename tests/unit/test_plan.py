@@ -231,3 +231,16 @@ def test_a_value_without_the_old_port_and_no_repository() -> None:
     )
     assert _synthetic(odd) == [("/r/b", "Procfile:1", "web → port 81", "WTS-PORT-001")]
     assert make_plan(Snapshot("0", "t")) == []
+
+
+def test_the_plan_names_the_scan_that_reads_its_env_changes(
+    example: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        sys, "argv", ["worktree-shield", "plan", "--repo", str(example), "--scope", "static"]
+    )
+    monkeypatch.setenv("COLUMNS", "300")
+    with pytest.raises(SystemExit):
+        cli.main()
+    out = " ".join(capsys.readouterr().out.split())
+    assert "then run worktree-shield scan --strict --include-env" in out

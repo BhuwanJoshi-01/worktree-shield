@@ -2,7 +2,9 @@
 
 Templates (``.env.example``, ``.env.sample``, ``.env.template``) are always read: they
 are committed and meant to be shared. ``.env`` and ``.env.local`` hold real values,
-often secrets, and are read only with ``include_env_files``. Either way a value leaves
+often secrets, and are read only with ``include_env_files``; then a key they set
+replaces the templates' value for it, as dotenv tools load ``.env.local`` over ``.env``
+and never read a template. Either way a value leaves
 this module only as a port number, a database without credentials or a path; the
 values of every other variable are dropped.
 """
@@ -52,19 +54,32 @@ def collect_env_files(
         for name in LOCAL_FILES:  # noted, not opened: what runs may differ from what was read
             if os.path.lexists(folder / name):
                 out.skipped.append(SkippedFile(scope.source(directory / name), NOT_READ))
+    files: list[tuple[PurePosixPath, tuple[EnvEntry, ...]]] = []
     for name in names:
         relative = directory / name
         text = scope.read(relative, out)
         if text is not None:
-            _collect(scope, relative, parse_dotenv(text), out)
+            files.append((relative, parse_dotenv(text)))
+    for index, (relative, entries) in enumerate(files):
+        later = files[index + 1 :]  # in names order: templates, then .env, then .env.local
+        overridden = {
+            e.key.upper() for path, found in later if path.name in LOCAL_FILES for e in found
+        }
+        _collect(scope, relative, entries, out, skip=overridden)
 
 
 def _collect(
-    scope: Scope, relative: PurePosixPath, entries: tuple[EnvEntry, ...], out: Collected
+    scope: Scope,
+    relative: PurePosixPath,
+    entries: tuple[EnvEntry, ...],
+    out: Collected,
+    *,
+    skip: set[str],
 ) -> None:
+    """The claims of one file, except for keys a higher-priority local file sets."""
     by_name = {entry.key.upper(): entry for entry in entries}
     for entry in entries:
-        if entry.reference:
+        if entry.reference or entry.key.upper() in skip:
             continue
         value = entry.value.strip()
         source = scope.source(relative, entry.line)

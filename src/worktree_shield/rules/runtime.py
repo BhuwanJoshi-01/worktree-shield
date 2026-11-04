@@ -16,7 +16,7 @@ from worktree_shield.models import (
     Status,
 )
 from worktree_shield.overlap import Overlap, overlap
-from worktree_shield.rules.common import VERIFY, evidence, plain, port_of
+from worktree_shield.rules.common import evidence, plain, port_of, verify_for
 from worktree_shield.rules.engine import Context, Rule, confidence_for, status_for
 
 NOT_LOOKED_AT = "Running processes were not looked at"
@@ -60,7 +60,7 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             evidence=evidence(collision.claims),
             recommended_action="Stop the running server first, or start this worktree's "
             "server on another port.",
-            verify_command=VERIFY,
+            verify_command=verify_for(collision.claims, context.policy),
             limitations=(SNAPSHOT,),
         )
     static = [
@@ -101,7 +101,7 @@ def _ports_in_use(context: Context) -> Iterator[Finding]:
             evidence=evidence(blocked),
             recommended_action="Stop that process if it is a leftover dev server, or give "
             "the worktrees another port.",
-            verify_command=VERIFY,
+            verify_command=verify_for(blocked, context.policy),
             limitations=(SNAPSHOT,),
         )
     if not found:
