@@ -1,63 +1,246 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Worktree Shield</title>
-  <meta name="description" content="Find the ports, databases and Docker resources your Git worktrees share before your agents collide. Read-only, open source.">
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worktree Shield: find the ports, databases and Docker projects your Git worktrees share</title>
+<meta name="description" content="Audit parallel Git worktrees for shared ports, databases, Docker Compose projects and paths before your coding agents collide. Read-only, with a policy file, CI exit codes, SARIF and a GitHub Action.">
+<link rel="canonical" href="https://bhuwanjoshi-01.github.io/worktree-shield/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Worktree Shield">
+<meta property="og:description" content="Find the ports, databases and Docker projects your Git worktrees share, before your agents collide. Read-only, with the file and line of each one.">
+<meta property="og:url" content="https://bhuwanjoshi-01.github.io/worktree-shield/">
+<meta property="og:image" content="https://bhuwanjoshi-01.github.io/worktree-shield/assets/social-card.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Worktree Shield: three worktrees drawn as transit lines that meet at shared stations for port 5173, the database app_dev and the Compose project app.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1e1e24">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/overpass.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script src="main.js" defer></script>
 </head>
 <body>
-  <header>
-    <h1>Worktree Shield</h1>
-    <p class="tagline">Find the ports, databases and Docker resources your Git worktrees share, before your agents collide.</p>
-    <p class="links">
-      <a href="https://github.com/BhuwanJoshi-01/worktree-shield">Source on GitHub</a>
-      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/rules.md">Rules</a>
-      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/cli.md">Commands</a>
-    </p>
-  </header>
 
-  <main>
-    <section>
-      <p>Every worktree gets its own checkout, but not its own infrastructure. Three worktrees still start a dev
-        server on <code>5173</code>, migrate the same <code>app_dev</code> database and run one Docker Compose
-        project. Worktree Shield reads their configuration (and, if you like, what is running), and reports each
-        shared resource with the file and line it came from and how certain the collision is.</p>
-      <figure>
-        <img src="assets/scan.svg" alt="worktree-shield scan on three worktrees: port 5173 fails WTS-PORT-001, the database app_dev and the Compose project app warn, and the shared volume follows from the project.">
-        <figcaption>The example repository from the source: three worktrees that collide.</figcaption>
-      </figure>
-    </section>
+<header class="topbar">
+  <div class="wrap topbar-row">
+    <a class="brand" href="#top">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><use href="assets/favicon.svg#mark"/></svg>
+      Worktree Shield
+    </a>
+    <nav aria-label="Page">
+      <a href="#finds">What it finds</a>
+      <a href="#ci">In CI</a>
+      <a href="https://github.com/BhuwanJoshi-01/worktree-shield">GitHub</a>
+    </nav>
+  </div>
+</header>
 
-    <section>
-      <h2>Install</h2>
-      <pre><code>uv tool install git+https://github.com/BhuwanJoshi-01/worktree-shield
-worktree-shield scan            # in any worktree of your repository
-worktree-shield scan --strict   # exit 1 when a finding fails, for CI and agent preflight
-worktree-shield plan            # one change per worktree that would resolve it</code></pre>
-      <p>Needs Python 3.11 or newer and git. Tested on Linux and Windows; on macOS the runtime view sees only
-        your own processes.</p>
-    </section>
+<main id="top">
+  <section class="hero" aria-labelledby="title">
+    <div class="wrap hero-head">
+      <h1 id="title">Find the ports, databases and Docker projects your worktrees share</h1>
+      <div class="hero-side">
+        <p class="lede">Git worktrees give every agent its own checkout, not its own infrastructure. Worktree Shield
+          audits the worktrees you already have, however they were made, and shows each shared resource with the
+          file and line it comes from.</p>
+        <div class="command">
+          <code id="install-command">uv tool install git+https://github.com/BhuwanJoshi-01/worktree-shield</code>
+          <button class="copy" type="button" data-copy="install-command">Copy</button>
+        </div>
+      </div>
+    </div>
 
-    <section class="promises">
-      <h2>What it promises</h2>
-      <ul>
-        <li><strong>Read-only.</strong> Nothing in your worktrees or <code>.git</code> is written, locked or pruned;
-          no process is stopped, no container touched.</li>
-        <li><strong>Nothing from the repository runs.</strong> Scripts, Vite configs and Compose files are read as
-          text and data, never executed.</li>
-        <li><strong>No secrets in output.</strong> Database URLs lose their credentials while they are parsed;
-          <code>.env</code> is read only when you ask.</li>
-        <li><strong>Honest certainty.</strong> Two configs naming one port is <em>probable</em>; only a running
-          server makes it <em>confirmed</em>, and a guess never fails CI.</li>
+    <figure class="map-figure wrap" aria-labelledby="map-caption">
+      <div class="map-head">
+        <p class="map-caption" id="map-caption">The example repository: three worktrees made from one branch.</p>
+        <div class="toggle" role="group" aria-label="What the map shows">
+          <button type="button" data-view="scan" aria-pressed="true">worktree-shield scan</button>
+          <button type="button" data-view="plan" aria-pressed="false">After the plan</button>
+        </div>
+      </div>
+
+      <div class="map" data-view="scan">
+        <svg class="map-svg" viewBox="0 0 1100 400" role="img" aria-labelledby="map-title map-desc">
+          <title id="map-title">The worktrees as transit lines</title>
+          <desc id="map-desc" data-field="map-desc"></desc>
+          <g class="headers" aria-hidden="true">
+            <text x="420" y="34">Port</text>
+            <text x="630" y="34">Database</text>
+            <text x="840" y="34">Compose project</text>
+          </g>
+
+          <g class="view view-scan" aria-hidden="true">
+            <path class="line line-a" d="M150 90 H250 L348 188 H880 L978 90 H1060"/>
+            <path class="line line-b" d="M150 200 H1060"/>
+            <path class="line line-c" d="M150 310 H250 L348 212 H880 L978 310 H1060"/>
+            <g class="interchange"><rect x="406" y="176" width="28" height="48" rx="14"/></g>
+            <g class="interchange"><rect x="616" y="176" width="28" height="48" rx="14"/></g>
+            <g class="interchange"><rect x="826" y="176" width="28" height="48" rx="14"/></g>
+            <text class="station" x="420" y="150">5173</text>
+            <text class="station" x="630" y="150">app_dev</text>
+            <text class="station" x="840" y="150">app</text>
+            <g class="badge badge-fail"><rect x="355" y="242" width="130" height="28" rx="4"/><text x="420" y="261">FAIL PORT-001</text></g>
+            <g class="badge badge-warn"><rect x="570" y="242" width="120" height="28" rx="4"/><text x="630" y="261">WARN DB-001</text></g>
+            <g class="badge badge-warn"><rect x="765" y="242" width="150" height="28" rx="4"/><text x="840" y="261">WARN DOCKER-001</text></g>
+          </g>
+
+          <g class="view view-plan" aria-hidden="true">
+            <path class="line line-a" d="M150 90 H1060"/>
+            <path class="line line-b" d="M150 200 H1060"/>
+            <path class="line line-c" d="M150 310 H1060"/>
+            <g class="stop stop-a"><circle cx="420" cy="90" r="11"/><circle cx="630" cy="90" r="11"/><circle cx="840" cy="90" r="11"/></g>
+            <g class="stop stop-b"><circle cx="420" cy="200" r="11"/><circle cx="630" cy="200" r="11"/><circle cx="840" cy="200" r="11"/></g>
+            <g class="stop stop-c"><circle cx="420" cy="310" r="11"/><circle cx="630" cy="310" r="11"/><circle cx="840" cy="310" r="11"/></g>
+            <text class="station" x="420" y="128">5173</text>
+            <text class="station" x="630" y="128">app_dev</text>
+            <text class="station" x="840" y="128">app</text>
+            <text class="station changed" x="420" y="238">5174</text>
+            <text class="station changed" x="630" y="238">app_dev_app_billing</text>
+            <text class="station changed" x="840" y="238">app-billing</text>
+            <text class="station changed" x="420" y="348">5175</text>
+            <text class="station changed" x="630" y="348">app_dev_app_login</text>
+            <text class="station changed" x="840" y="348">app-login</text>
+          </g>
+
+          <g class="termini" aria-hidden="true">
+            <g class="terminus terminus-a"><rect x="10" y="72" width="140" height="36" rx="18"/><text x="80" y="96">app</text></g>
+            <g class="terminus terminus-b"><rect x="10" y="182" width="140" height="36" rx="18"/><text x="80" y="206">app-billing</text></g>
+            <g class="terminus terminus-c"><rect x="10" y="292" width="140" height="36" rx="18"/><text x="80" y="316">app-login</text></g>
+            <circle class="end end-a" cx="1060" cy="90" r="9"/>
+            <circle class="end end-b" cx="1060" cy="200" r="9"/>
+            <circle class="end end-c" cx="1060" cy="310" r="9"/>
+          </g>
+        </svg>
+
+        <div class="table-scroll map-table">
+          <table>
+            <caption class="visually-hidden">What each worktree uses</caption>
+            <thead><tr><th scope="col">Worktree</th><th scope="col">Port</th><th scope="col">Database</th><th scope="col">Compose project</th></tr></thead>
+            <tbody data-field="map-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="map-readout" aria-live="polite">
+        <p data-field="readout"></p>
+<pre><code data-field="readout-command"></code></pre>
+      </div>
+    </figure>
+  </section>
+
+  <section class="finds" id="finds" aria-labelledby="finds-title">
+    <div class="wrap">
+      <h2 id="finds-title">What it finds</h2>
+      <p class="section-lede">Each shared resource is a finding with a stable code, the evidence for every worktree,
+        and how certain the collision is. <code>worktree-shield explain CODE</code> tells you more about one.</p>
+      <ul class="kinds">
+        <li><span class="dot dot-red" aria-hidden="true"></span><div><b>Listen ports</b><code>WTS-PORT-001</code>
+          <p>Dev servers on the same port: only one can listen at a time. With a process already holding it,
+            <code>WTS-PORT-002</code> confirms it.</p></div></li>
+        <li><span class="dot dot-blue" aria-hidden="true"></span><div><b>Databases</b><code>WTS-DB-001</code>
+          <p>The same database on the same server: one worktree’s migrations and seed data change the other’s.</p></div></li>
+        <li><span class="dot dot-green" aria-hidden="true"></span><div><b>Compose projects</b><code>WTS-DOCKER-001</code>
+          <p>One project name: <code>docker compose up</code> in one worktree takes over the other’s containers.</p></div></li>
+        <li><span class="dot dot-amber" aria-hidden="true"></span><div><b>Container names and volumes</b><code>WTS-DOCKER-002/003</code>
+          <p>Fixed <code>container_name</code> values and named volumes that every stack mounts.</p></div></li>
+        <li><span class="dot dot-violet" aria-hidden="true"></span><div><b>Absolute paths</b><code>WTS-PATH-001</code>
+          <p>Upload, cache and output folders outside the worktree that each one writes to.</p></div></li>
       </ul>
-    </section>
-  </main>
+      <p class="where">Read from <code>.env.example</code> (and <code>.env</code> when you opt in), <code>package.json</code>
+        scripts, Vite configs, <code>pyproject.toml</code> tasks, Compose files, Procfiles and dev containers, and the
+        ports running processes listen on. <a href="https://github.com/BhuwanJoshi-01/worktree-shield/blob/main/docs/what-is-read.md">Everything that is read</a>.</p>
+    </div>
+  </section>
 
-  <footer>
-    <p>MIT licensed. Bug reports and test reports are very welcome on
-      <a href="https://github.com/BhuwanJoshi-01/worktree-shield/issues">GitHub</a>.</p>
-  </footer>
+  <section class="certainty" aria-labelledby="certainty-title">
+    <div class="wrap certainty-grid">
+      <div>
+        <h2 id="certainty-title">It says how sure it is</h2>
+        <p>Two worktrees that configure the same port will collide only if both servers run. So a finding from
+          configuration is <em>probable</em>; it becomes <em>confirmed</em> when a running process, found by its
+          working directory, already holds the port. Ports that only might overlap, such as a wildcard and a
+          specific address, are <em>possible</em>.</p>
+        <p>Sharing on purpose is fine: allow one Postgres for everyone in <code>.worktree-shield.toml</code>, and
+          <code>--strict</code> fails only on what your policy denies.</p>
+      </div>
+      <dl class="scale">
+        <div><dt><span class="pill pill-confirmed">confirmed</span></dt><dd>A process from another worktree listens on the port right now.</dd></div>
+        <div><dt><span class="pill pill-probable">probable</span></dt><dd>The configuration of two worktrees names the same resource.</dd></div>
+        <div><dt><span class="pill pill-possible">possible</span></dt><dd>The resources may overlap; it depends on how they are reached.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="output" aria-labelledby="output-title">
+    <div class="wrap output-grid">
+      <div>
+        <h2 id="output-title">The scan, as your terminal shows it</h2>
+        <p>The example repository has three worktrees that start a server on 5173, use the database
+          <code>app_dev</code> and share one Compose project. Every line of evidence names the worktree, the file
+          and the line.</p>
+<pre class="listing"><code>worktree-shield scan            # all worktrees, read-only
+worktree-shield scan --strict   # exit 1 when a finding fails
+worktree-shield plan            # one change per worktree; never applied
+worktree-shield resources       # every resource each worktree declares
+worktree-shield report -f sarif -o conflicts.sarif</code></pre>
+        <p class="fine">Try it on a repository built to collide:
+          <code>python examples/conflicting-worktrees/build.py /tmp/wts-demo</code>.</p>
+      </div>
+      <figure class="screen">
+        <img src="assets/scan.svg" width="1287" height="1075" loading="lazy" alt="worktree-shield scan on three worktrees: FAIL WTS-PORT-001 for port 5173 configured in three worktrees, WARN WTS-DB-001 for the database app_dev and WARN WTS-DOCKER-001 for the Compose project app, each with the file and line in every worktree and the next step.">
+      </figure>
+    </div>
+  </section>
+
+  <section class="ci" id="ci" aria-labelledby="ci-title">
+    <div class="wrap ci-grid">
+      <div>
+        <h2 id="ci-title">In CI and before an agent starts</h2>
+        <p>A CI checkout is a single worktree, so the GitHub Action checks your branch out next to another ref and
+          reports what the two would share, as SARIF for code scanning. On your machine,
+          <code>scan --strict --format json</code> is a preflight an agent can run before it starts a server.</p>
+        <p class="fine">In CI the scan is static: the processes on a runner say nothing about your machine.</p>
+      </div>
+<pre class="listing listing-dark"><code>- uses: actions/checkout@v7
+- uses: BhuwanJoshi-01/worktree-shield@v0.1.0
+  with:
+    compare-with: main
+    strict: "true"
+- uses: github/codeql-action/upload-sarif@v4
+  if: always()
+  with:
+    sarif_file: worktree-shield.sarif</code></pre>
+    </div>
+  </section>
+
+  <section class="promises" aria-labelledby="promises-title">
+    <div class="wrap">
+      <h2 id="promises-title">What it never does</h2>
+      <ul class="promise-list">
+        <li><b>Run your code.</b> Package scripts, Git hooks, Vite configs and Compose are parsed as data, never
+          executed. Docker doesn’t need to be running.</li>
+        <li><b>Change anything.</b> No writes to your worktrees or <code>.git</code>, no locks, no pruning, no
+          killed processes, no touched databases.</li>
+        <li><b>Print secrets.</b> Database URLs are cut to host, port and name as they are read; <code>.env</code>
+          files are read only when you opt in.</li>
+        <li><b>Phone home.</b> No network access, no telemetry.</li>
+      </ul>
+      <p class="fine">Creating worktrees with their own ports instead? <a href="https://github.com/rohansx/workz">workz</a>
+        and <a href="https://github.com/mostafasudo/worktree-compose">worktree-compose</a> do that. Worktree Shield
+        creates nothing; it audits whatever is already there.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-row">
+    <p>MIT licensed. Made by <a href="https://github.com/BhuwanJoshi-01">Bhuwan Joshi</a>. This page loads nothing
+      from other sites.</p>
+    <p>Also by the same author: <a href="https://bhuwanjoshi-01.github.io/gpu-stack-inspector/">GPU Stack Inspector</a>
+      and <a href="https://bhuwanjoshi-01.github.io/screenshare-doctor/">Screenshare Doctor</a>.</p>
+  </div>
+</footer>
 </body>
 </html>
